@@ -2,17 +2,12 @@ import json
 import mongoengine as mongo
 from mongoengine import fields
 import os
+import shutil
 from werkzeug.utils import secure_filename
 
 DUMPS_DIR = "dumps"
 SYM_FILES_DIR = "symbols"
 STACK_TRACES_DIR = "stacktraces"
-ALLOWED_EXTENSIONS = 'dmp'
-
-
-def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 class Minidump(mongo.Document):
@@ -24,13 +19,12 @@ class Minidump(mongo.Document):
     minidump = fields.FileField()  # Google Breakpad minidump
 
     def save_minidump(self, request):
-
         if not os.path.isdir(DUMPS_DIR):
             os.makedirs(DUMPS_DIR)
 
         if 'minidump' in request.files:
             file = request.files['minidump']
-            if file and allowed_file(file.filename):
+            if file:
                 filename = secure_filename(file.filename)
                 self.filename = filename
                 target_path = self.get_minidump_path()
@@ -45,7 +39,7 @@ class Minidump(mongo.Document):
     def get_minidump_path(self):
         return os.path.join(DUMPS_DIR, self.filename)
 
-    def get_stacktrace(self):
+    def get_stack_trace(self):
 
         raise NotImplementedError()
 
@@ -65,26 +59,53 @@ class Minidump(mongo.Document):
         return minidump
 
     def __str__(self):
-        return "<Minidump: {} {} {} {}>".format(self.product, self.version, self.platform, self.filename)
+        return "<Minidump: {} {} {} {}>".format(self.product,
+                                                self.version,
+                                                self.platform,
+                                                self.filename)
 
 
 class SymFile(mongo.Document):
-    project = fields.StringField()
+    product = fields.StringField()
     version = fields.StringField()
     platform = fields.StringField()
-    sym_filename = fields.StringField()
+    sym_file_name = fields.StringField()
+    sym_file_id = fields.StringField()
     sym_file = fields.FileField()
 
     def save_sym_file(self, request):
-        if not os.path.isdir(SYM_FILES_DIR):
-            os.makedirs(SYM_FILES_DIR)
         if 'symfile' in request.files:
             file = request.files['symfile']
-            if file and allowed_file(file.filename):
+            if file:
                 filename = secure_filename(file.filename)
-                self.sym_filename = filename
+                self.sym_file_name = filename
+                file.save(self.sym_file_name)
+                with open(self.sym_file_name, 'r') as f:
+                    self.sym_file_id = f.readline().split()[3]
                 target_path = self.get_sym_file_path()
-                file.save(target_path)
+                if not os.path.isdir(target_path):
+                    os.makedirs(target_path)
+                shutil.move(self.sym_file_name, target_path)
 
     def get_sym_file_path(self):
-        return os.path.join(SYM_FILES_DIR, self.project, self.sym_filename)
+        return os.path.join(SYM_FILES_DIR, self.product, self.sym_file_id, self.sym_file_name)
+
+    @classmethod
+    def create_sym_file(cls, request):
+        data = json.loads(request.form['data'])
+        sym_file = cls(product=data['product'],
+                       version=data['version'],
+                       platform=data['platform'])
+        try:
+            cls.save_sym_file(sym_file, request)
+            sym_file.save()
+        except Exception as e:
+            print(e)
+        sym_file.save()
+        return sym_file
+
+    def __str__(self):
+        return "<SymFile: {} {} {} {}>".format(self.product,
+                                               self.version,
+                                               self.platform,
+                                               self.sym_file_id)
