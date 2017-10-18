@@ -1,6 +1,5 @@
 from flask import Flask, jsonify, request
 import flask_mongoengine as mongo
-import json
 import models
 
 
@@ -23,9 +22,9 @@ app = create_app()
 def add_minidump():
     if request.method == 'POST':
         # NOTE (COMMAND EXAMPLE TO CHECK):
-        # > curl http://127.0.0.1:5000/crash-report -F minidump=@/home/mrn/7b6adef3-9734-0904-02f96cac-28733638.dmp
-        # -F data='{"product":"RedisDesktopManager","version":"0.8.0","platform":"Linux"}'
-        data = json.loads(request.form['data'])
+        # curl <site_host>/crash-report -F minidump=@/path/to/dump_file
+        # -F product=<product> -F version=<version> -F platform=<platform>
+        data = request.form
         version = data['version']
 
         if version < "0.8":
@@ -37,20 +36,22 @@ def add_minidump():
         models.Minidump.create_minidump(request)
 
         return jsonify({"ok": "Thank you!"}), 201
+    else:
+        return jsonify({"ok": "Try POST"})
 
 
 @app.route('/sym-file', methods=['GET', 'POST'])
 def add_sym_file():
+    # NOTE (COMMAND EXAMPLE TO CHECK):
+    # > curl <site_host>/sym-file -F symfile=@/path/to/sym_file -F version=<version>
     if request.method == 'POST':
-        # NOTE (COMMAND EXAMPLE TO CHECK):
-        # > curl http://127.0.0.1:5000/sym-file -F symfile=@/home/mrn/RDM/OopsyPad/rdm.sym
-        # -F data='{"product":"RedisDesktopManager","version":"0.8.0","platform":"Linux"}'
         try:
             models.SymFile.create_sym_file(request)
             return jsonify({"ok": "Symbol file saved."}), 201
         except Exception as e:
             return jsonify({"error": "Something went wrong: {}".format(e)}), 400
-
+    else:
+        return jsonify({"ok": "Try POST"})
 
 if __name__ == '__main__':
     app.run()

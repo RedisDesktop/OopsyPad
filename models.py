@@ -1,4 +1,3 @@
-import json
 import mongoengine as mongo
 from mongoengine import fields
 import os
@@ -25,8 +24,7 @@ class Minidump(mongo.Document):
         if 'minidump' in request.files:
             file = request.files['minidump']
             if file:
-                filename = secure_filename(file.filename)
-                self.filename = filename
+                self.filename = secure_filename(file.filename)
                 target_path = self.get_minidump_path()
                 file.save(target_path)
                 # Q: do we need this file field at all?
@@ -46,7 +44,7 @@ class Minidump(mongo.Document):
     @classmethod
     def create_minidump(cls, request):
 
-        data = json.loads(request.form['data'])
+        data = request.form
         minidump = cls(product=data['product'],
                        version=data['version'],
                        platform=data['platform'])
@@ -77,25 +75,22 @@ class SymFile(mongo.Document):
         if 'symfile' in request.files:
             file = request.files['symfile']
             if file:
-                filename = secure_filename(file.filename)
-                self.sym_file_name = filename
+                self.sym_file_name = secure_filename(file.filename)
                 file.save(self.sym_file_name)
                 with open(self.sym_file_name, 'r') as f:
-                    self.sym_file_id = f.readline().split()[3]
+                    _, self.platform, _, self.sym_file_id, self.product = f.readline().split()
                 target_path = self.get_sym_file_path()
                 if not os.path.isdir(target_path):
                     os.makedirs(target_path)
                 shutil.move(self.sym_file_name, target_path)
 
     def get_sym_file_path(self):
-        return os.path.join(SYM_FILES_DIR, self.product, self.sym_file_id, self.sym_file_name)
+        return os.path.join(SYM_FILES_DIR, self.product, self.sym_file_id)
 
     @classmethod
     def create_sym_file(cls, request):
-        data = json.loads(request.form['data'])
-        sym_file = cls(product=data['product'],
-                       version=data['version'],
-                       platform=data['platform'])
+        data = request.form
+        sym_file = cls(version=data['version'])
         try:
             cls.save_sym_file(sym_file, request)
             sym_file.save()
