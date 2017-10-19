@@ -5,7 +5,7 @@ import shutil
 from werkzeug.utils import secure_filename
 
 DUMPS_DIR = "dumps"
-SYM_FILES_DIR = "symbols"
+SYMFILES_DIR = "symbols"
 STACK_TRACES_DIR = "stacktraces"
 
 
@@ -16,6 +16,7 @@ class Minidump(mongo.Document):
     platform = fields.StringField()  # OS name
     filename = fields.StringField()
     minidump = fields.FileField()  # Google Breakpad minidump
+    stacktrace = fields.StringField()
 
     def save_minidump(self, request):
         if not os.path.isdir(DUMPS_DIR):
@@ -36,10 +37,6 @@ class Minidump(mongo.Document):
 
     def get_minidump_path(self):
         return os.path.join(DUMPS_DIR, self.filename)
-
-    def get_stack_trace(self):
-
-        raise NotImplementedError()
 
     @classmethod
     def create_minidump(cls, request):
@@ -67,40 +64,40 @@ class SymFile(mongo.Document):
     product = fields.StringField()
     version = fields.StringField()
     platform = fields.StringField()
-    sym_file_name = fields.StringField()
-    sym_file_id = fields.StringField()
-    sym_file = fields.FileField()
+    symfile_name = fields.StringField()
+    symfile_id = fields.StringField()
+    symfile = fields.FileField()
 
-    def save_sym_file(self, request):
+    def save_symfile(self, request):
         if 'symfile' in request.files:
             file = request.files['symfile']
             if file:
-                self.sym_file_name = secure_filename(file.filename)
-                file.save(self.sym_file_name)
-                with open(self.sym_file_name, 'r') as f:
-                    _, self.platform, _, self.sym_file_id, self.product = f.readline().split()
-                target_path = self.get_sym_file_path()
+                self.symfile_name = secure_filename(file.filename)
+                file.save(self.symfile_name)
+                with open(self.symfile_name, 'r') as f:
+                    _, self.platform, _, self.symfile_id, self.product = f.readline().split()
+                target_path = self.get_symfile_path()
                 if not os.path.isdir(target_path):
                     os.makedirs(target_path)
-                shutil.move(self.sym_file_name, target_path)
+                shutil.move(self.symfile_name, target_path)
 
-    def get_sym_file_path(self):
-        return os.path.join(SYM_FILES_DIR, self.product, self.sym_file_id)
+    def get_symfile_path(self):
+        return os.path.join(SYMFILES_DIR, self.product, self.symfile_id)
 
     @classmethod
-    def create_sym_file(cls, request):
+    def create_symfile(cls, request):
         data = request.form
-        sym_file = cls(version=data['version'])
+        symfile = cls(version=data['version'])
         try:
-            cls.save_sym_file(sym_file, request)
-            sym_file.save()
+            cls.save_symfile(symfile, request)
+            symfile.save()
         except Exception as e:
             print(e)
-        sym_file.save()
-        return sym_file
+        symfile.save()
+        return symfile
 
     def __str__(self):
         return "<SymFile: {} {} {} {}>".format(self.product,
                                                self.version,
                                                self.platform,
-                                               self.sym_file_id)
+                                               self.symfile_id)
