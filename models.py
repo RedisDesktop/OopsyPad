@@ -1,7 +1,6 @@
 import mongoengine as mongo
 from mongoengine import fields
 import os
-import shutil
 from werkzeug.utils import secure_filename
 
 DUMPS_DIR = "dumps"
@@ -40,7 +39,6 @@ class Minidump(mongo.Document):
 
     @classmethod
     def create_minidump(cls, request):
-
         data = request.form
         minidump = cls(product=data['product'],
                        version=data['version'],
@@ -66,31 +64,29 @@ class SymFile(mongo.Document):
     symfile = fields.FileField()
 
     def save_symfile(self, request):
-        if 'symfile' in request.files:
+        try:
             file = request.files['symfile']
-            if file:
-                self.symfile_name = secure_filename(file.filename)
-                file.save(self.symfile_name)
-                with open(self.symfile_name, 'r') as f:
-                    _, self.platform, _, self.symfile_id, self.product = f.readline().split()
-                target_path = self.get_symfile_path()
-                if not os.path.isdir(target_path):
-                    os.makedirs(target_path)
-                shutil.move(self.symfile_name, target_path)
+            self.symfile_name = secure_filename(file.filename)
+            target_path = self.get_symfile_path()
+            if not os.path.isdir(target_path):
+                os.makedirs(target_path)
+            file.save(os.path.join(target_path, self.symfile_name))
+            self.save()
+        except(KeyError, AttributeError) as e:
+            # TODO: logger
+            print(e)
 
     def get_symfile_path(self):
         return os.path.join(SYMFILES_DIR, self.product, self.symfile_id)
 
     @classmethod
-    def create_symfile(cls, request):
+    def create_symfile(cls, request, product, id):
         data = request.form
-        symfile = cls(version=data['version'])
-        try:
-            cls.save_symfile(symfile, request)
-            symfile.save()
-        except Exception as e:
-            print(e)
-        symfile.save()
+        symfile = cls(product=product,
+                      symfile_id=id,
+                      version=data['version'],
+                      platform=data['platform'])
+        cls.save_symfile(symfile, request)
         return symfile
 
     def __str__(self):

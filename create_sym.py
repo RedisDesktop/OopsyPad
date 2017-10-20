@@ -12,9 +12,9 @@ def create_symfile(bin_path, symfile_name, symfile_root):
         f.write(dump_syms_output.stdout)
 
     with open(symfile_name, 'r') as f:
-        _, _, _, symfile_id, symfile_app = f.readline().split()
+        _, _, _, id, product = f.readline().split()
 
-    symfile_target_path = os.path.join(symfile_root, symfile_app, symfile_id)
+    symfile_target_path = os.path.join(symfile_root, product, id)
 
     if not os.path.isdir(symfile_target_path):
         os.makedirs(symfile_target_path)
@@ -30,11 +30,12 @@ def create_symfile(bin_path, symfile_name, symfile_root):
 @click.option('--version', help='Product version.')
 def upload_symfile(path, name, address, version):
     symfile_path = create_symfile(path, name, app.config['SYMFILES_DIR'])
+    with open(symfile_path, 'r') as f:
+        _, platform, _, id, product = f.readline().split()
     with open(symfile_path, 'rb') as f:
         files = {'symfile': f}
-        data = {'version': version}
-        requests.post("{}/sym-file".format(address), data=data, files=files)
-
+        data = {'version': version, 'platform': platform}
+        requests.post("{}/data/symfiles/{}/{}".format(address, product, id), data=data, files=files)
 
 if __name__ == '__main__':
     upload_symfile()

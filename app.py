@@ -25,7 +25,6 @@ def process_minidump(minidump_id):
         minidump_path = minidump.get_minidump_path()
         minidump_stackwalk_output = subprocess.run(['minidump_stackwalk', minidump_path,
                                                     app.config['SYMFILES_DIR']], stdout=subprocess.PIPE)
-
         minidump.stacktrace = minidump_stackwalk_output.stdout.decode()
         minidump.save()
 
@@ -40,10 +39,8 @@ def add_minidump():
         # NOTE (COMMAND EXAMPLE TO CHECK):
         # curl <site_host>/crash-report -F upload_file_minidump=@/path/to/dump_file
         # -F product=<product> -F version=<version> -F platform=<platform>
-
         data = request.form
         version = data['version']
-
         if version < "0.8":
             return jsonify({
                 "error": "You use an old version. "
@@ -60,13 +57,11 @@ def add_minidump():
         return jsonify({"ok": "Try POST"})
 
 
-@app.route('/sym-file', methods=['GET', 'POST'])
-def add_symfile():
-    # NOTE (COMMAND EXAMPLE TO CHECK):
-    # > curl <site_host>/sym-file -F symfile=@/path/to/symfile -F version=<version>
+@app.route('/data/symfiles/<product>/<id>', methods=['GET', 'POST'])
+def add_symfile(product, id):
     if request.method == 'POST':
         try:
-            models.SymFile.create_symfile(request)
+            models.SymFile.create_symfile(request, product, id)
             return jsonify({"ok": "Symbol file saved."}), 201
         except Exception as e:
             return jsonify({"error": "Something went wrong: {}".format(e)}), 400
