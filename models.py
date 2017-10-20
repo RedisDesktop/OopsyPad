@@ -6,7 +6,6 @@ from werkzeug.utils import secure_filename
 
 DUMPS_DIR = "dumps"
 SYMFILES_DIR = "symbols"
-STACK_TRACES_DIR = "stacktraces"
 
 
 class Minidump(mongo.Document):
@@ -21,19 +20,20 @@ class Minidump(mongo.Document):
     def save_minidump(self, request):
         if not os.path.isdir(DUMPS_DIR):
             os.makedirs(DUMPS_DIR)
-
-        if 'minidump' in request.files:
-            file = request.files['minidump']
-            if file:
-                self.filename = secure_filename(file.filename)
-                target_path = self.get_minidump_path()
-                file.save(target_path)
-                # Q: do we need this file field at all?
-                with open(target_path, 'rb') as minidump:
-                    if self.minidump:
-                        self.minidump.replace(minidump)
-                    else:
-                        self.minidump.put(minidump)
+        try:
+            file = request.files['upload_file_minidump']
+            self.filename = secure_filename(file.filename)
+            target_path = self.get_minidump_path()
+            file.save(target_path)
+            # Q: do we need this file field at all?
+            with open(target_path, 'rb') as minidump:
+                if self.minidump:
+                    self.minidump.replace(minidump)
+                else:
+                    self.minidump.put(minidump)
+        except (KeyError, AttributeError) as e:
+            # TODO: logger
+            print(e)
 
     def get_minidump_path(self):
         return os.path.join(DUMPS_DIR, self.filename)
@@ -45,10 +45,7 @@ class Minidump(mongo.Document):
         minidump = cls(product=data['product'],
                        version=data['version'],
                        platform=data['platform'])
-        try:
-            cls.save_minidump(minidump, request)
-        except Exception as e:
-            print(e)
+        cls.save_minidump(minidump, request)
 
         minidump.save()
         return minidump

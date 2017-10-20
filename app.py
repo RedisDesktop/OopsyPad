@@ -8,12 +8,8 @@ import models
 
 def create_app():
     app = Flask(__name__)
-    app.config['MAX_CONTENT_LENGTH'] = 4 * 1024 * 1024  # 4 MB (max size of rdm sym file ever seen is 1.9 MB)
-    app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/1'
-    app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/1'
-    app.config['SYMFILES_DIR'] = 'symbols'
-    app.config['MONGODB_SETTINGS'] = {'DB': "oopsy_pad"}
-    app.config['DEBUG'] = True
+    app.config.from_pyfile("config.py")
+    app.config.from_pyfile("config_local.py", silent=True)
     mongo.MongoEngine(app)
     return app
 
@@ -42,8 +38,9 @@ def process_minidump(minidump_id):
 def add_minidump():
     if request.method == 'POST':
         # NOTE (COMMAND EXAMPLE TO CHECK):
-        # curl <site_host>/crash-report -F minidump=@/path/to/dump_file
+        # curl <site_host>/crash-report -F upload_file_minidump=@/path/to/dump_file
         # -F product=<product> -F version=<version> -F platform=<platform>
+
         data = request.form
         version = data['version']
 
