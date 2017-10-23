@@ -1,9 +1,9 @@
+from celery import Celery
 from flask import Flask, jsonify, request
 import flask_mongoengine as mongo
-from celery import Celery
 import subprocess
 
-import models
+from oopsypad.server import models
 
 
 def create_app():

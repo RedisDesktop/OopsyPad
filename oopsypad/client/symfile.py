@@ -1,9 +1,10 @@
-import click
 import os
+import click
 import requests
 import shutil
 import subprocess
-from app import app
+
+from oopsypad.server.app import app
 
 
 def create_symfile(bin_path, symfile_name, symfile_root):
@@ -29,13 +30,19 @@ def create_symfile(bin_path, symfile_name, symfile_root):
 @click.option('--address', help='Host address.')
 @click.option('--version', help='Product version.')
 def upload_symfile(path, name, address, version):
+    send_symfile(path, name, address, version)
+
+
+def send_symfile(path, name, address, version):
     symfile_path = create_symfile(path, name, app.config['SYMFILES_DIR'])
     with open(symfile_path, 'r') as f:
         _, platform, _, id, product = f.readline().split()
     with open(symfile_path, 'rb') as f:
         files = {'symfile': f}
         data = {'version': version, 'platform': platform}
-        requests.post("{}/data/symfiles/{}/{}".format(address, product, id), data=data, files=files)
+        r = requests.post("{}/data/symfiles/{}/{}".format(address, product, id), data=data, files=files)
+    return r
+
 
 if __name__ == '__main__':
     upload_symfile()

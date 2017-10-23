@@ -24,7 +24,6 @@ class Minidump(mongo.Document):
             self.filename = secure_filename(file.filename)
             target_path = self.get_minidump_path()
             file.save(target_path)
-            # Q: do we need this file field at all?
             with open(target_path, 'rb') as minidump:
                 if self.minidump:
                     self.minidump.replace(minidump)
