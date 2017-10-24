@@ -29,6 +29,7 @@ class Minidump(mongo.Document):
                     self.minidump.replace(minidump)
                 else:
                     self.minidump.put(minidump)
+            minidump.save()
         except (KeyError, AttributeError) as e:
             # TODO: logger
             print(e)
@@ -36,15 +37,19 @@ class Minidump(mongo.Document):
     def get_minidump_path(self):
         return os.path.join(DUMPS_DIR, self.filename)
 
+    def create_stacktrace(self):
+        from oopsypad.server import worker
+        worker.process_minidump.delay(str(self.id))
+
     @classmethod
     def create_minidump(cls, request):
         data = request.form
         minidump = cls(product=data['product'],
                        version=data['version'],
                        platform=data['platform'])
-        cls.save_minidump(minidump, request)
 
-        minidump.save()
+        cls.save_minidump(minidump, request)
+        cls.create_stacktrace(minidump)
         return minidump
 
     def __str__(self):

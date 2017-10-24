@@ -1,7 +1,5 @@
-from celery import Celery
 from flask import Flask, jsonify, request
 import flask_mongoengine as mongo
-import subprocess
 
 from oopsypad.server import models
 
@@ -16,18 +14,6 @@ def create_app():
 
 
 app = create_app()
-_celery = Celery(app.name, backend=app.config['CELERY_RESULT_BACKEND'], broker=app.config['CELERY_BROKER_URL'])
-
-
-@_celery.task
-def process_minidump(minidump_id):
-    with app.app_context():
-        minidump = models.Minidump.objects.get(id=minidump_id)
-        minidump_path = minidump.get_minidump_path()
-        minidump_stackwalk_output = subprocess.run(['minidump_stackwalk', minidump_path,
-                                                    app.config['SYMFILES_DIR']], stdout=subprocess.PIPE)
-        minidump.stacktrace = minidump_stackwalk_output.stdout.decode()
-        minidump.save()
 
 
 # Supported API
@@ -47,8 +33,7 @@ def add_minidump():
                      "Please download the latest release <a href=\"http://redisdesktop.com/download\">0.8.0</a>"}
         ), 400
     try:
-        minidump = models.Minidump.create_minidump(request)
-        process_minidump.delay(str(minidump.id))
+        models.Minidump.create_minidump(request)
     except Exception as e:
         return jsonify({"error": "Something went wrong: {}".format(e)}), 400
 
