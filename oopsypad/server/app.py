@@ -1,3 +1,4 @@
+import click
 from flask import Flask, jsonify, request
 import flask_mongoengine as mongo
 
@@ -47,6 +48,13 @@ def add_symfile(product, id):
         return jsonify({"ok": "Symbol file saved."}), 201
     except Exception as e:
         return jsonify({"error": "Something went wrong: {}".format(e)}), 400
+
+
+@click.command()
+@click.option('--host', '-h', help='OopsyPad host.')
+@click.option('--port', '-p', default=5000, help='OopsyPad port.')
+def run_server(host, port):
+    app.run(host, int(port))
 
 
 if __name__ == '__main__':

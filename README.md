@@ -10,6 +10,18 @@ pip install oopsypad
 ```
 
 ## Usage
+To run the server use `oopsy_run_server` command.
+```shell
+oopsy_run_server
+```
+Optionally you can specify `host` and `port` which by default are `127.0.0.1` and `5000` respectively.
+```shell
+oopsy_run_server --host example.com --port 5050
+```
+After that run worker for minidump processing.
+```shell
+celery -A oopsypad.server.worker._celery worker
+```
 ### Symbol files
 Symbol files are necessary to decode minidump's binary data into human-readable stack trace.
 
