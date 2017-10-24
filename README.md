@@ -13,7 +13,7 @@ pip install oopsypad
 ### Symbol files
 Symbol files are necessary to decode minidump's binary data into human-readable stack trace.
 
-To generate symbol file and send it to the server use `send_symfile` function.
+To generate symbol file and send it to the server use `send_symfile` function __or__ `oopsy_send_symfile` command.
 Here the required arguments are the `path` to the product executable file, a `name` for the resulting symbol file, site host `address` where `oopsypad` is hosted and the `version` of the product.
 Calling `send_symfile`:
 ```python
@@ -25,10 +25,10 @@ send_symfile(path='/path/to/product/executable',
 ```
 Or the same thing for command line:
 ```shell
-python3 symfile.py --path path/to/product/executable --name rdm.sym --address http://example.com --version 0.9
+oopsy_send_symfile path/to/product/executable rdm.sym http://example.com 0.9
 ```
 ### Minidumps processing
-Send minidumps for processing by calling the `send_minidump` function as in example below or by sending a POST request to the `/crash-report` endpoint with the minidump file specified as an `upload_file_minidump` parameter as well as a `product` name, its `version` and a `platform`.
+Send minidumps for processing by calling the `send_minidump` function as in example below __or__ with `oopsy_send_minidump` command __or__ by sending a POST request to the `/crash-report` endpoint with the minidump file specified as an `upload_file_minidump` parameter as well as a `product` name, its `version` and a `platform`.
 
 Example of using the `send_minidump` function:
 ```python
@@ -39,7 +39,10 @@ send_minidump(address='http://example.com',
               version='0.9',
               platform='Linux')
 ```
-
+Using command line:
+```shell
+oopsy_send_minidump http://example.com /path/to/minidump rdm 0.9 Linux
+```
 POST request using `curl`:
 ```shell
 curl -X POST \

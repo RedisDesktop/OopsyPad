@@ -1,5 +1,5 @@
-import os
 import click
+import os
 import requests
 import shutil
 import subprocess
@@ -25,11 +25,22 @@ def create_symfile(bin_path, symfile_name, symfile_root):
 
 
 @click.command()
-@click.option('--path', help='Binary path.')
-@click.option('--name', help='Target symbol file name.')
-@click.option('--address', help='Host address.')
-@click.option('--version', help='Product version.')
+@click.argument('path')
+@click.argument('name')
+@click.argument('address')
+@click.argument('version')
 def upload_symfile(path, name, address, version):
+    """
+    \b
+    PATH
+        Product executable binary path.
+    NAME
+        Target symbol file name.
+    ADDRESS
+        OopsyPad host address.
+    VERSION
+        Product version.
+    """
     send_symfile(path, name, address, version)
 
 
@@ -42,7 +53,3 @@ def send_symfile(path, name, address, version):
         data = {'version': version, 'platform': platform}
         r = requests.post("{}/data/symfiles/{}/{}".format(address, product, id), data=data, files=files)
     return r
-
-
-if __name__ == '__main__':
-    upload_symfile()

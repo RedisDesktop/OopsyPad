@@ -16,4 +16,9 @@ setup(
         'celery',
     ],
     packages=find_packages(),
+    entry_points={
+        'console_scripts':
+            ['oopsy_send_symfile = oopsypad.client.symfile:upload_symfile',
+             'oopsy_send_minidump = oopsypad.client.minidump:upload_minidump']
+    }
 )
