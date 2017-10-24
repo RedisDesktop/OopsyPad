@@ -18,7 +18,7 @@ Here the required arguments are the `path` to the product executable file, a `na
 Calling `send_symfile`:
 ```python
 from oopsypad.client.symfile import send_symfile
-send_symfile(path='path/to/product/executable',
+send_symfile(path='/path/to/product/executable',
              name='rdm.sym',
              address='http://example.com',
              version='0.9')
@@ -48,4 +48,11 @@ curl -X POST \
      -F version=0.9 \
      -F platform=Linux \
      http://example.com/crash-report
+```
+
+## Configuration
+You may want to add some extra settings for OopsyPad.
+To do so you should specify the path to your configuration file as `OOPSYPAD_SETTINGS` environment variable:
+```shell
+export OOPSYPAD_SETTINGS=/path/to/settings/file
 ```

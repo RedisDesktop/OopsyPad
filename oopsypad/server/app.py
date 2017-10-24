@@ -9,6 +9,7 @@ from oopsypad.server import models
 def create_app():
     app = Flask(__name__)
     app.config.from_pyfile("config.py")
+    app.config.from_envvar("OOPSYPAD_SETTINGS", silent=True)
     app.config.from_pyfile("config_local.py", silent=True)
     mongo.MongoEngine(app)
     return app
@@ -37,7 +38,7 @@ def process_minidump(minidump_id):
 def add_minidump():
     if request.method == 'POST':
         # NOTE (COMMAND EXAMPLE TO CHECK):
-        # curl <site_host>/crash-report -F upload_file_minidump=@/path/to/dump_file
+        # curl <site_host>/crash-report -F upload_file_minidump=@</path/to/dump_file>
         # -F product=<product> -F version=<version> -F platform=<platform>
         data = request.form
         version = data['version']
