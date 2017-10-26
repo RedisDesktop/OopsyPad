@@ -25,16 +25,22 @@ app = create_app()
 # POST /crash-report
 @app.route('/crash-report', methods=['POST'])
 def add_minidump():
-    # NOTE (COMMAND EXAMPLE TO CHECK):
-    # curl <site_host>/crash-report -F upload_file_minidump=@</path/to/dump_file>
-    # -F product=<product> -F version=<version> -F platform=<platform>
     data = request.form
+    product = data['product']
+
+    try:
+        project = models.Project.objects.get(name=product)
+    except Exception as e:
+        return jsonify({"error": "{} is not in the projects list ({}).".format(product, e)}), 400
+
     version = data['version']
-    if version < "0.8":
+    if version < project.min_version:
         return jsonify({
-            "error": "You use an old version. "
-                     "Please download the latest release <a href=\"http://redisdesktop.com/download\">0.8.0</a>"}
-        ), 400
+            "error": "You use an old version. Please download at least {} release.".format(project.min_version)}), 400
+
+    platform = data['platform']
+    if platform not in project.get_allowed_platforms():
+        return jsonify({"error": "{} platform is not allowed for {}".format(platform, product)}), 400
     try:
         models.Minidump.create_minidump(request)
     except Exception as e:

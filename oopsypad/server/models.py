@@ -29,10 +29,9 @@ class Minidump(mongo.Document):
                     self.minidump.replace(minidump)
                 else:
                     self.minidump.put(minidump)
-            minidump.save()
+            self.save()
         except (KeyError, AttributeError) as e:
-            # TODO: logger
-            print(e)
+            raise e
 
     def get_minidump_path(self):
         return os.path.join(DUMPS_DIR, self.filename)
@@ -77,8 +76,7 @@ class SymFile(mongo.Document):
             file.save(os.path.join(target_path, self.symfile_name))
             self.save()
         except(KeyError, AttributeError) as e:
-            # TODO: logger
-            print(e)
+            raise e
 
     def get_symfile_path(self):
         return os.path.join(SYMFILES_DIR, self.product, self.symfile_id)
@@ -104,6 +102,9 @@ class Project(mongo.Document):
     name = fields.StringField(required=True, unique=True)
     min_version = fields.StringField()
     allowed_platforms = fields.ListField(fields.ReferenceField('Platform'))
+
+    def get_allowed_platforms(self):
+        return [i.name for i in self.allowed_platforms]
 
 
 class Platform(mongo.Document):
