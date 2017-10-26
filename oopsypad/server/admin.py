@@ -18,6 +18,7 @@ class ProjectView(ModelView):
     column_formatters = dict(actions=macro('render_actions'))
     column_list = ('name', 'actions')
     create_modal = True
+    create_modal_template = 'admin/add_project_modal.html'
     create_template = 'admin/add_project.html'
     details_template = 'admin/project_overview.html'
     edit_template = 'admin/edit_project.html'
