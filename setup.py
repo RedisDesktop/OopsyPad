@@ -11,6 +11,7 @@ setup(
     description='Breakpad minidump processing tool.',
     install_requires=[
         'flask',
+        'flask-admin',
         'flask-mongoengine',
         'redis',
         'celery',

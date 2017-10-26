@@ -3,6 +3,7 @@ from flask import Flask, jsonify, request
 import flask_mongoengine as mongo
 
 from oopsypad.server import models
+from oopsypad.server.admin import admin
 
 
 def create_app():
@@ -11,6 +12,7 @@ def create_app():
     app.config.from_envvar("OOPSYPAD_SETTINGS", silent=True)
     app.config.from_pyfile("config_local.py", silent=True)
     mongo.MongoEngine(app)
+    admin.init_app(app)
     return app
 
 
@@ -59,3 +61,4 @@ def run_server(host, port):
 
 if __name__ == '__main__':
     app.run()
+    # app.run(debug=False)

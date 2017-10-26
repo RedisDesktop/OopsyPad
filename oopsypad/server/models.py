@@ -98,3 +98,17 @@ class SymFile(mongo.Document):
                                                self.version,
                                                self.platform,
                                                self.symfile_id)
+
+
+class Project(mongo.Document):
+    name = fields.StringField(required=True, unique=True)
+    min_version = fields.StringField()
+    allowed_platforms = fields.ListField(fields.ReferenceField('Platform'))
+
+
+class Platform(mongo.Document):
+    platforms = ['Linux', 'MacOS', 'Windows']
+    name = fields.StringField(required=True, unique=True, choices=platforms)
+
+    def __str__(self):
+        return self.name
