@@ -1,7 +1,12 @@
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 import mongoengine as mongo
 from mongoengine import fields
+from mongoengine.queryset.visitor import Q
 import os
 from werkzeug.utils import secure_filename
+
+from oopsypad.server.helpers import last_12_months
 
 DUMPS_DIR = "dumps"
 SYMFILES_DIR = "symbols"
@@ -15,6 +20,8 @@ class Minidump(mongo.Document):
     filename = fields.StringField()
     minidump = fields.FileField()  # Google Breakpad minidump
     stacktrace = fields.StringField()
+    date_created = fields.DateTimeField(default=datetime.now())
+    crash_reason = fields.StringField()
 
     def save_minidump(self, request):
         if not os.path.isdir(DUMPS_DIR):
@@ -40,6 +47,9 @@ class Minidump(mongo.Document):
         from oopsypad.server import worker
         worker.process_minidump.delay(str(self.id))
 
+    def get_time(self):
+        return self.date_created.strftime('%d.%m.%y %H:%M')
+
     @classmethod
     def create_minidump(cls, request):
         data = request.form
@@ -50,6 +60,22 @@ class Minidump(mongo.Document):
         cls.save_minidump(minidump, request)
         cls.create_stacktrace(minidump)
         return minidump
+
+    @classmethod
+    def get_last_12_months_minidumps_count(cls, queryset):
+        today = datetime.now()
+        counts = []
+        for months in last_12_months():
+            months_ago = today - relativedelta(months=months)
+            one_less_months_ago = today - relativedelta(months=months + 1)
+            months_ago_minidumps_count = queryset.filter(
+                Q(date_created__lte=months_ago) & Q(date_created__gte=one_less_months_ago)).count()
+            counts.append(months_ago_minidumps_count)
+        return counts
+
+    @classmethod
+    def get_versions_per_product(cls, product):
+        return sorted(list(set([i.version for i in cls.objects(product=product)])))
 
     def __str__(self):
         return "<Minidump: {} {} {} {}>".format(self.product,
@@ -105,6 +131,11 @@ class Project(mongo.Document):
 
     def get_allowed_platforms(self):
         return [i.name for i in self.allowed_platforms]
+
+    def __str__(self):
+        return "<Project: {} {} {}>".format(self.name,
+                                            self.min_version,
+                                            self.allowed_platforms)
 
 
 class Platform(mongo.Document):

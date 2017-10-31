@@ -1,3 +1,136 @@
 {% extends 'admin/model/details.html' %}
 
-{% block navlinks %}{% endblock %}
+{% macro empty_list() %}
+    <tr>
+        <td colspan="999">
+            {% block empty_list_message %}
+                <div class="text-center">
+                    {{ admin_view.get_empty_list_message() }}
+                </div>
+            {% endblock %}
+        </td>
+    </tr>
+{% endmacro %}
+{% block body %}
+    <style>
+        .btn {
+            width: 140px;
+        }
+        .btn-view-all, .dropdown {
+            float: right;
+        }
+        .container {
+            margin-bottom: 40px;
+        }
+        ul.legend li{
+            display: inline-block;
+            margin: 10px;
+        }
+    </style>
+
+    <div class="row">
+        <div class="col-md-12">
+            <h3>Project Overview</h3>
+
+            <div id="legend_crash_reports"></div>
+
+            <div class="dropdown">
+                <button id="select-version-btn" class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">Version
+                    <span class="caret"></span></button>
+                <ul id="select-version" class="dropdown-menu">
+                    <li><a href="#">All Versions</a></li>
+                    {% for v in versions %}
+                        <li><a href="#">{{ v }}</a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <canvas id="crash_reports" width="500" height="150"></canvas>
+        </div>
+    </div>
+
+    <h3>Latest Crash Reports</h3>
+    <div class="table-responsive">
+        <table class="table table-striped table-bordered table-hover model-list">
+            <thead>
+            <tr>
+                <th>Time</th>
+                <th>Platform</th>
+                <th>Reason</th>
+            </tr>
+            </thead>
+            {% for row in latest_crash_reports %}
+                <tr>
+                    <td>{{ row.get_time() }}</td>
+                    <td>{{ row.platform }}</td>
+                    <td>{{ row.crash_reason }}</td>
+                </tr>
+            {% else %}
+                {{ empty_list() }}
+            {% endfor %}
+        </table>
+    </div>
+    <a href="/crash-reports/?flt0_2={{ project.name }}" class="btn btn-default btn-view-all">View All</a>
+
+
+    <h3>Top Issues</h3>
+    <div class="table-responsive">
+        <table class="table table-striped table-bordered table-hover model-list">
+            <thead>
+            <tr>
+                <th>Priority</th>
+                <th>Platform</th>
+                <th>Total Crash Reports</th>
+                <th>Reason</th>
+            </tr>
+            </thead>
+            {% for row in top_issues %}
+                <tr>
+                    <td>*priority*</td>
+                    <td>*platform*</td>
+                    <td>*total*</td>
+                    <td>*reason*</td>
+                </tr>
+            {% else %}
+                {{ empty_list() }}
+            {% endfor %}
+        </table>
+    </div>
+    <a href="#" class="btn btn-default btn-view-all">View All</a>
+
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/1.0.2/Chart.min.js"></script>
+    <script type="text/javascript">
+        var $SCRIPT_ROOT = "/project/";
+        function load_chart(uri, canvas_id) {
+            $.getJSON(uri, {}, function (data) {
+                if (window.chart)  window.chart.destroy();
+                var ctx = $("#" + canvas_id)[0].getContext("2d");
+                window.chart = new Chart(ctx).Bar(data.result, {
+                    responsive: true,
+                    legendTemplate: '<ul class="legend">'
+                      +'<% for (var i = 0; i < datasets.length; i++) { %>'
+                        +'<li>'
+                            +'<span style=\"background-color:<%=datasets[i].strokeColor%>\">&nbsp;&nbsp;&nbsp;&nbsp;</span>'
+                            +'<% if (datasets[i].label) { %> <%= datasets[i].label %><% } %>'
+                          +'</li>'
+                        +'<% } %>'
+                      +'</ul>'
+                });
+                $('#legend_' + canvas_id).html(window.chart.generateLegend())
+            });
+        }
+    </script>
+    <script type="text/javascript">
+        $(function () {
+            load_chart($SCRIPT_ROOT + '_crash_reports' + '?id={{ request.args.get('id') }}', "crash_reports");
+        });
+        $('#select-version li').on('click', function () {
+            var version = $(this).text();
+            load_chart($SCRIPT_ROOT + '_crash_reports' + '?id={{ request.args.get('id') }}' + '&version=' + version, "crash_reports");
+            $('#select-version-btn').html(version + ' <span class="caret"></span>');
+        })
+    </script>
+{% endblock %}
+<footer class="footer"><div class="container"></div></footer>

@@ -15,6 +15,7 @@ setup(
         'flask-mongoengine',
         'redis',
         'celery',
+        'python-dateutil',
     ],
     packages=find_packages(),
     entry_points={
