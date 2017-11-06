@@ -7,6 +7,6 @@
 {% endmacro %}
 
 {% block model_menu_bar %}
-    <h3>Projects: {{ lib.add_modal_button(url=get_url('.create_view', url=return_url, modal=True),
+    <h3>Projects {{ lib.add_modal_button(url=get_url('.create_view', url=return_url, modal=True),
     content=_gettext('Add Project'), btn_class='btn btn-default') }}</h3>
 {% endblock %}

@@ -70,7 +70,7 @@
             {% endfor %}
         </table>
     </div>
-    <a href="/crash-reports/?flt0_2={{ project.name }}" class="btn btn-default btn-view-all">View All</a>
+    <a href="/crash-reports/?flt_2={{ project.name }}" class="btn btn-default btn-view-all">View All</a>
 
 
     <h3>Top Issues</h3>
@@ -79,6 +79,7 @@
             <thead>
             <tr>
                 <th>Priority</th>
+                <th>Version</th>
                 <th>Platform</th>
                 <th>Total Crash Reports</th>
                 <th>Reason</th>
@@ -86,17 +87,18 @@
             </thead>
             {% for row in top_issues %}
                 <tr>
-                    <td>*priority*</td>
-                    <td>*platform*</td>
-                    <td>*total*</td>
-                    <td>*reason*</td>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ row.version }}</td>
+                    <td>{{ row.platform }}</td>
+                    <td>{{ row.total }}</td>
+                    <td>{{ row.reason }}</td>
                 </tr>
             {% else %}
                 {{ empty_list() }}
             {% endfor %}
         </table>
     </div>
-    <a href="#" class="btn btn-default btn-view-all">View All</a>
+    <a href="/issue/?flt_2={{ project.name }}" class="btn btn-default btn-view-all">View All</a>
 
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>

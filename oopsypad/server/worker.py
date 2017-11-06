@@ -13,4 +13,5 @@ def process_minidump(minidump_id):
         minidump_stackwalk_output = subprocess.run(['minidump_stackwalk', minidump_path,
                                                     app.config['SYMFILES_DIR']], stdout=subprocess.PIPE)
         minidump.stacktrace = minidump_stackwalk_output.stdout.decode()
+        minidump.parse_stacktrace()
         minidump.save()

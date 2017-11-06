@@ -1,9 +1,12 @@
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+from flask_mongoengine import BaseQuerySet
+import json
 import mongoengine as mongo
 from mongoengine import fields
 from mongoengine.queryset.visitor import Q
 import os
+from stackwalker import stackwalk
 from werkzeug.utils import secure_filename
 
 from oopsypad.server.helpers import last_12_months
@@ -13,15 +16,19 @@ SYMFILES_DIR = "symbols"
 
 
 class Minidump(mongo.Document):
-    # product version platform upload_file_minidump
     product = fields.StringField()  # Crashed application name
     version = fields.StringField()  # Crashed application version
     platform = fields.StringField()  # OS name
     filename = fields.StringField()
-    minidump = fields.FileField()  # Google Breakpad minidump
+    minidump = fields.FileField()  # Google Breakpad minidump (upload_file_minidump)
     stacktrace = fields.StringField()
-    date_created = fields.DateTimeField(default=datetime.now())
+    stacktrace_json = fields.DictField()
+    date_created = fields.DateTimeField()
     crash_reason = fields.StringField()
+    crash_address = fields.StringField()
+    crash_thread = fields.IntField()
+    meta = {'ordering': ['-date_created'],
+            'queryset_class': BaseQuerySet}
 
     def save_minidump(self, request):
         if not os.path.isdir(DUMPS_DIR):
@@ -47,35 +54,59 @@ class Minidump(mongo.Document):
         from oopsypad.server import worker
         worker.process_minidump.delay(str(self.id))
 
+    def parse_stacktrace(self):
+        # TODO: change names of args keys
+        args = {
+            'minidump_path': self.get_minidump_path(),
+            'symbol_paths': [SYMFILES_DIR],
+            'err_log_path': '/tmp/stackwalker_log'
+        }
+        self.stacktrace_json = json.loads(stackwalk(json.dumps(args)))
+        crash_info = self.stacktrace_json['crash_info']
+        self.crash_reason = crash_info['type']
+        self.crash_address = crash_info['address']
+        self.crash_thread = crash_info['crashing_thread']
+        self.save()
+        Issue.create_or_update_issue(product=self.product,
+                                     version=self.version,
+                                     platform=self.platform,
+                                     reason=self.crash_reason)
+
     def get_time(self):
-        return self.date_created.strftime('%d.%m.%y %H:%M')
+        return self.date_created.strftime('%d.%m.%Y %H:%M')
 
     @classmethod
     def create_minidump(cls, request):
         data = request.form
         minidump = cls(product=data['product'],
                        version=data['version'],
-                       platform=data['platform'])
+                       platform=data['platform'],
+                       date_created=datetime.now())
 
         cls.save_minidump(minidump, request)
         cls.create_stacktrace(minidump)
         return minidump
 
     @classmethod
-    def get_last_12_months_minidumps_count(cls, queryset):
-        today = datetime.now()
+    def get_last_12_months_minidumps_counts(cls, queryset):
+        today = datetime.today().replace(day=1)
         counts = []
         for months in last_12_months():
             months_ago = today - relativedelta(months=months)
-            one_less_months_ago = today - relativedelta(months=months + 1)
+            one_more_months_ago = today - relativedelta(months=months - 1)
             months_ago_minidumps_count = queryset.filter(
-                Q(date_created__lte=months_ago) & Q(date_created__gte=one_less_months_ago)).count()
+                Q(date_created__lte=one_more_months_ago) & Q(date_created__gte=months_ago)).count()
             counts.append(months_ago_minidumps_count)
         return counts
 
     @classmethod
     def get_versions_per_product(cls, product):
         return sorted(list(set([i.version for i in cls.objects(product=product)])))
+
+    @classmethod
+    def get_last_n_project_minidumps(cls, n, project):
+        project_minidumps = cls.objects(product=project.name)
+        return project_minidumps[:n]
 
     def __str__(self):
         return "<Minidump: {} {} {} {}>".format(self.product,
@@ -144,3 +175,42 @@ class Platform(mongo.Document):
 
     def __str__(self):
         return self.name
+
+
+class Issue(mongo.Document):
+    product = fields.StringField()
+    version = fields.StringField()
+    platform = fields.StringField()
+    reason = fields.StringField()
+    total = fields.IntField(default=1)
+    meta = {'ordering': ['-total']}
+
+    @classmethod
+    def create_or_update_issue(cls, product, version, platform, reason):
+        try:
+            issue = cls.objects.get(product=product,
+                                    version=version,
+                                    platform=platform,
+                                    reason=reason)
+        except mongo.DoesNotExist:
+            issue = None
+        if issue:
+            issue.total += 1
+        else:
+            issue = cls(product=product,
+                        version=version,
+                        platform=platform,
+                        reason=reason)
+        issue.save()
+        return issue
+
+    @classmethod
+    def get_top_n_project_issues(cls, n, project):
+        return cls.objects(product=project.name)[:n]
+
+    def __str__(self):
+        return "<Issue: {} {} {} {} {}>".format(self.product,
+                                                self.version,
+                                                self.platform,
+                                                self.reason,
+                                                self.total)

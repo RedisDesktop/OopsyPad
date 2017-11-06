@@ -36,7 +36,7 @@ def get_decorated_data(labels, data, data_labels=None):
 
 
 def get_last_12_months_labels():
-    today = datetime.now()
+    today = datetime.today()
     labels = [(today - relativedelta(months=months)).month for months in last_12_months()]
     return [calendar.month_name[m] for m in labels]
 
@@ -64,19 +64,19 @@ class ProjectView(ModelView):
     }
     form_create_rules = {'name'}
     form_edit_rules = ('min_version', 'allowed_platforms')
-    list_template = '/admin/project_list.html'
+    list_template = 'admin/project_list.html'
 
     @expose('/details/')
     def details_view(self):
         project = models.Project.objects.get(id=request.args.get('id'))
-        project_minidumps = models.Minidump.objects(product=project.name)
         minidump_versions = models.Minidump.get_versions_per_product(product=project.name)
-        last_10_minidumps = project_minidumps.order_by('-date_created')[:10]
+        last_10_minidumps = models.Minidump.get_last_n_project_minidumps(n=10, project=project)
+        issues = models.Issue.get_top_n_project_issues(n=10, project=project)
         return self.render('admin/project_overview.html',
                            project=project,
                            versions=minidump_versions,
                            latest_crash_reports=last_10_minidumps,
-                           top_issues=[]  # TODO: replace with actual data
+                           top_issues=issues
                            )
 
     @expose('/_crash_reports')
@@ -91,9 +91,9 @@ class ProjectView(ModelView):
         data = {}
         for platform in platforms:
             platform_minidumps = project_minidumps(platform=platform)
-            data[platform] = models.Minidump.get_last_12_months_minidumps_count(platform_minidumps)
-        labels = get_last_12_months_labels()
+            data[platform] = models.Minidump.get_last_12_months_minidumps_counts(platform_minidumps)
 
+        labels = get_last_12_months_labels()
         return jsonify(
             result=get_decorated_data(labels=labels,
                                       data=data.values(),
@@ -102,9 +102,45 @@ class ProjectView(ModelView):
 
 
 class CrashReportView(ModelView):
+    can_create = False
+    can_edit = False
+    can_delete = False
+    column_display_actions = False
     column_list = ('product', 'version', 'platform', 'date_created', 'crash_reason')
     column_filters = ('product', 'version', 'platform', 'date_created', 'crash_reason')
     list_template = 'admin/crash_report_list.html'
+
+
+class IssueView(ModelView):
+    can_create = False
+    can_edit = False
+    can_delete = False
+    can_view_details = True
+    column_default_sort = ('total', True)
+    column_display_actions = False
+    column_filters = ('product', 'platform', 'reason')
+    column_formatters = dict(actions=macro('render_actions'))
+    column_list = ('platform', 'version', 'reason', 'total', 'actions')
+    form_args = {
+        'total': {'label': 'Total Crash Reports'},
+    }
+    list_template = 'admin/issue_list.html'
+    page_size = 10
+
+    @expose('/details/')
+    def details_view(self):
+        issue = models.Issue.objects.get(id=request.args.get('id'))
+        minidumps = models.Minidump.objects(product=issue.product,
+                                            version=issue.version,
+                                            platform=issue.platform,
+                                            crash_reason=issue.reason)
+        page_num = int(request.args.get('page') or 1)
+        per_page = 10
+        return self.render('admin/issue_details.html',
+                           issue=issue,
+                           column_details_list=self.column_details_list,
+                           minidumps=minidumps.paginate(page=page_num, per_page=per_page),
+                           per_page=per_page)
 
 
 admin = Admin(
@@ -118,3 +154,4 @@ admin = Admin(
 admin.add_view(ProjectView(models.Project, name='Projects'))
 admin.add_view(ModelView(models.Platform, name='Platforms'))
 admin.add_view(CrashReportView(models.Minidump, name='Crash Reports', endpoint='crash-reports'))
+admin.add_view(IssueView(models.Issue, name='Issues'))
