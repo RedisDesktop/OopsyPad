@@ -1,9 +1,12 @@
+import os
 from setuptools import find_packages, setup
 import sys
 
 assert sys.version_info >= (3,), 'Python 3 is required'
 
-VERSION = "0.1"
+VERSION = '0.1.0-alpha'
+if sys.argv[-1] == 'install':
+    os.system('./3rdparty/build.sh')
 
 setup(
     name="oopsypad",

@@ -6,13 +6,14 @@ import mongoengine as mongo
 from mongoengine import fields
 from mongoengine.queryset.visitor import Q
 import os
-from stackwalker import stackwalk
+import subprocess
 from werkzeug.utils import secure_filename
 
 from oopsypad.server.helpers import last_12_months
 
 DUMPS_DIR = "dumps"
 SYMFILES_DIR = "symbols"
+STACKWALKER = os.path.join(os.path.dirname(__file__), "./../../3rdparty/minidump-stackwalk/stackwalker")
 
 
 class Minidump(mongo.Document):
@@ -50,18 +51,16 @@ class Minidump(mongo.Document):
     def get_minidump_path(self):
         return os.path.join(DUMPS_DIR, self.filename)
 
-    def create_stacktrace(self):
-        from oopsypad.server import worker
-        worker.process_minidump.delay(str(self.id))
+    def get_stacktrace(self):
+        minidump_path = self.get_minidump_path()
+        minidump_stackwalk_output = subprocess.check_output(['minidump_stackwalk', minidump_path, SYMFILES_DIR])
+        self.stacktrace = minidump_stackwalk_output.decode()
+        self.save()
 
     def parse_stacktrace(self):
-        # TODO: change names of args keys
-        args = {
-            'minidump_path': self.get_minidump_path(),
-            'symbol_paths': [SYMFILES_DIR],
-            'err_log_path': '/tmp/stackwalker_log'
-        }
-        self.stacktrace_json = json.loads(stackwalk(json.dumps(args)))
+        minidump_path = self.get_minidump_path()
+        stackwalker_output = subprocess.check_output([STACKWALKER, '--pretty', minidump_path, SYMFILES_DIR])
+        self.stacktrace_json = json.loads(stackwalker_output.decode())
         crash_info = self.stacktrace_json['crash_info']
         self.crash_reason = crash_info['type']
         self.crash_address = crash_info['address']
@@ -71,6 +70,10 @@ class Minidump(mongo.Document):
                                      version=self.version,
                                      platform=self.platform,
                                      reason=self.crash_reason)
+
+    def create_stacktrace(self):
+        from oopsypad.server import worker
+        worker.process_minidump.delay(str(self.id))
 
     def get_time(self):
         return self.date_created.strftime('%d.%m.%Y %H:%M')
