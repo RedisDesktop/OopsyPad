@@ -2,11 +2,15 @@
 
 ## Be aware of your apps' Oopsies.
 OopsyPad is a Breakpad minidumps processing tool for [RedisDesktopManager](https://github.com/uglide/RedisDesktopManager).
+
 ## Requirements
 - `Python 3`
+
 ## Installation
 ```shell
-pip install oopsypad
+git clone --recursive https://github.com/RedisDesktop/OopsyPad.git
+cd OopsyPad/
+sudo python setup.py install
 ```
 
 ## Usage
@@ -22,6 +26,7 @@ After that run worker for minidump processing.
 ```shell
 celery -A oopsypad.server.worker._celery worker
 ```
+
 ### Symbol files
 Symbol files are necessary to decode minidump's binary data into human-readable stack trace.
 
@@ -39,6 +44,7 @@ Or the same thing for command line:
 ```shell
 oopsy_send_symfile path/to/product/executable rdm.sym http://example.com 0.9
 ```
+
 ### Minidumps processing
 Send minidumps for processing by calling the `send_minidump` function as in example below __or__ with `oopsy_send_minidump` command __or__ by sending a POST request to the `/crash-report` endpoint with the minidump file specified as an `upload_file_minidump` parameter as well as a `product` name, its `version` and a `platform`.
 
