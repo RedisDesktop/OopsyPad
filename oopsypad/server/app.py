@@ -1,6 +1,8 @@
 import click
 from flask import Flask, jsonify, request
 import flask_mongoengine as mongo
+import os
+import subprocess
 
 from oopsypad.server import models
 from oopsypad.server.admin import admin
@@ -59,10 +61,14 @@ def add_symfile(product, id):
 
 
 @click.command()
-@click.option('--host', '-h', help='OopsyPad host.')
+@click.option('--host', '-h', default="127.0.0.1", help='OopsyPad host.')
 @click.option('--port', '-p', default=5000, help='OopsyPad port.')
 def run_server(host, port):
-    app.run(host, int(port))
+    os.chdir(app.root_path)
+    subprocess.run(['gunicorn',
+                    '-w 4',
+                    '-b {}:{}'.format(host, port),
+                    'app:app'])
 
 
 if __name__ == '__main__':

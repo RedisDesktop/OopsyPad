@@ -1,12 +1,9 @@
-import os
 from setuptools import find_packages, setup
 import sys
 
 assert sys.version_info >= (3,), 'Python 3 is required'
 
 VERSION = '0.1.0-alpha'
-if sys.argv[-1] == 'install':
-    os.system('./3rdparty/build.sh')
 
 setup(
     name="oopsypad",
@@ -21,6 +18,7 @@ setup(
         'python-dateutil',
     ],
     packages=find_packages(),
+    include_package_data=True,
     entry_points={
         'console_scripts':
             ['oopsy_run_server = oopsypad.server.app:run_server',

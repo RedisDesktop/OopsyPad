@@ -10,7 +10,8 @@ OopsyPad is a Breakpad minidumps processing tool for [RedisDesktopManager](https
 ```shell
 git clone --recursive https://github.com/RedisDesktop/OopsyPad.git
 cd OopsyPad/
-sudo python setup.py install
+./3rdparty/build.sh
+pip install .
 ```
 
 ## Usage
