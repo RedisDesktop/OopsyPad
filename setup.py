@@ -16,6 +16,7 @@ setup(
         'redis',
         'celery',
         'python-dateutil',
+        'gunicorn',
     ],
     packages=find_packages(),
     include_package_data=True,
