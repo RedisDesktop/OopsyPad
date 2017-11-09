@@ -25,7 +25,7 @@ oopsy_run_server --host example.com --port 5050
 ```
 After that run worker for minidump processing.
 ```shell
-celery -A oopsypad.server.worker._celery worker
+./run_celery_worker.sh
 ```
 
 ### Symbol files
