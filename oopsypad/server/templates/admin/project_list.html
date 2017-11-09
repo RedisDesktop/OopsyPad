@@ -1,0 +1,12 @@
+{% extends 'admin/model/list.html' %}
+
+
+{% macro render_actions(model, column) %}
+    <a href="/project/edit/?id={{ get_pk_value(model) }}" class="btn btn-default">Edit Project Settings</a>
+    <a href="/project/details/?id={{ get_pk_value(model) }}" class="btn btn-default">View Crash Reports</a>
+{% endmacro %}
+
+{% block model_menu_bar %}
+    <h3>Projects {{ lib.add_modal_button(url=get_url('.create_view', url=return_url, modal=True),
+    content=_gettext('Add Project'), btn_class='btn btn-default') }}</h3>
+{% endblock %}

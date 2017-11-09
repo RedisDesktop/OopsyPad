@@ -1,0 +1,10 @@
+{% extends 'admin/model/list.html' %}
+
+{% macro render_actions(model, column) %}
+    <a href="/issue/details/?id={{ get_pk_value(model) }}" class="btn btn-default">View</a>
+{% endmacro %}
+
+{% block body %}
+    <h3>Issues</h3>
+    {{ super() }}
+{% endblock %}
