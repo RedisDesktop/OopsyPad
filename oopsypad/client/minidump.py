@@ -22,7 +22,8 @@ def upload_minidump(address, dump_path, product, version, platform):
     PLATFORM
         Platform that the product is running on (Linux, MacOS, Windows).
     """
-    send_minidump(address, dump_path, product, version, platform)
+    response = send_minidump(address, dump_path, product, version, platform)
+    print(response.text)
 
 
 def send_minidump(address, dump_path, product, version, platform):

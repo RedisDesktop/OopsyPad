@@ -4,7 +4,7 @@ import requests
 import shutil
 import subprocess
 
-from oopsypad.server.app import app
+from oopsypad.server.views import app
 
 
 def create_symfile(bin_path, symfile_name, symfile_root):
@@ -41,7 +41,8 @@ def upload_symfile(path, name, address, version):
     VERSION
         Product version.
     """
-    send_symfile(path, name, address, version)
+    response = send_symfile(path, name, address, version)
+    print(response.text)
 
 
 def send_symfile(path, name, address, version):

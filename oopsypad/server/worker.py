@@ -1,5 +1,5 @@
 from celery import Celery
-from oopsypad.server.app import app, models
+from oopsypad.server import app, models
 
 _celery = Celery(app.name, backend=app.config['CELERY_RESULT_BACKEND'], broker=app.config['CELERY_BROKER_URL'])
 

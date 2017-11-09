@@ -1,24 +1,6 @@
-import click
-from flask import Flask, jsonify, request
-import flask_mongoengine as mongo
-import os
-import subprocess
+from flask import jsonify, request
 
-from oopsypad.server import models
-from oopsypad.server.admin import admin
-
-
-def create_app():
-    app = Flask(__name__)
-    app.config.from_pyfile("config.py")
-    app.config.from_envvar("OOPSYPAD_SETTINGS", silent=True)
-    app.config.from_pyfile("config_local.py", silent=True)
-    mongo.MongoEngine(app)
-    admin.init_app(app)
-    return app
-
-
-app = create_app()
+from oopsypad.server import models, app
 
 
 # Supported API
@@ -60,17 +42,6 @@ def add_symfile(product, id):
         return jsonify({"error": "Something went wrong: {}".format(e)}), 400
 
 
-@click.command()
-@click.option('--host', '-h', default="127.0.0.1", help='OopsyPad host.')
-@click.option('--port', '-p', default=5000, help='OopsyPad port.')
-def run_server(host, port):
-    os.chdir(app.root_path)
-    subprocess.run(['gunicorn',
-                    '-w 4',
-                    '-b {}:{}'.format(host, port),
-                    'app:app'])
-
-
 if __name__ == '__main__':
     app.run()
-    # app.run(debug=False)
+
