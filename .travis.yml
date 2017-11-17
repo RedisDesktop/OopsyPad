@@ -5,7 +5,7 @@ sudo: required
 
 os:
   - linux
-  - osx
+# - osx
   
 install:
 - if [ "$TRAVIS_OS_NAME" == "osx" ]; then 
