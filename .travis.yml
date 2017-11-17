@@ -41,7 +41,7 @@ script:
   - pushd ./tests/integration/test_app/bin
   - oopsy_send_symfile ./test_app test_app.sym http://127.0.0.1:8080 1.0.0
   - ./test_app || true
-  - mongo oopsy_pad --eval "show collections"
+  - mongo oopsy_pad --eval "db.getCollectionNames()"
   - mongo oopsy_pad --eval "db.minidump.find()"
   - mongo oopsy_pad --eval "db.symFile.find()"
   
