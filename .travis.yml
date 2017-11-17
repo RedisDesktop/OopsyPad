@@ -25,7 +25,9 @@ install:
   fi
 - pushd ./3rdparty && ./build.sh && popd
 - pushd ./tests/integration/test_app && ./build.sh && popd
-- virtualenv .venv && source .venv/bin/activate && pip install .
+- virtualenv .venv -p python3 && source .venv/bin/activate
+- python --version && which python
+- pip install .
 - oopsy_run_server --host 127.0.0.1 --port 8080
 - ./run_celery_worker.sh
 script:
