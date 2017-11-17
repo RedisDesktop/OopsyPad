@@ -1,6 +1,7 @@
-# OopsyPad
+# OopsyPad 
+[![Build Status](https://travis-ci.org/RedisDesktop/OopsyPad.svg?branch=master)](https://travis-ci.org/RedisDesktop/OopsyPad)
 
-## Be aware of your apps' Oopsies.
+### Be aware of your apps' Oopsies.
 OopsyPad is a Breakpad minidumps processing tool for [RedisDesktopManager](https://github.com/uglide/RedisDesktopManager).
 
 ## Requirements
