@@ -30,6 +30,10 @@ install:
 - pip install .
 - oopsy_run_server --host 127.0.0.1 --port 8080 & # FIX ME
 - chmod +x run_celery_worker.sh && ./run_celery_worker.sh
+- Xvfb :10 &
+- export DISPLAY=:10
 script:
-  - pushd ./tests/integration/test_app/bin && oopsy_send_symfile ./test_app test_app.sym http://127.0.0.1:8080 1.0.0
+  - pushd ./tests/integration/test_app/bin
+  - oopsy_send_symfile ./test_app test_app.sym http://127.0.0.1:8080 1.0.0
+  - ./test_app
   
