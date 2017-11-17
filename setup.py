@@ -19,8 +19,13 @@ setup(
         'gunicorn',
         'requests',
     ],
+    tests_require=[
+        'selenium',
+        'flask-testing',
+    ],
     packages=find_packages(),
     include_package_data=True,
+    zip_safe=False,
     entry_points={
         'console_scripts':
             ['oopsy_run_server = oopsypad.server.run:run_server',
