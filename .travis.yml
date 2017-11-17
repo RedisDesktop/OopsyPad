@@ -15,7 +15,7 @@ install:
     ;
   fi
 - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
-       sudo add-apt-repository --yes ppa:beineri/opt-qt59-trusty &&
+       sudo add-apt-repository --yes ppa:beineri/opt-qt592-trusty &&
        sudo apt-get update -y &&
        sudo apt-get install qt59base -y &&
        source /opt/qt59/bin/qt59-env.sh
