@@ -6,6 +6,8 @@ sudo: required
 os:
   - linux
 # - osx
+python:
+    - 3.6
   
 install:
 - if [ "$TRAVIS_OS_NAME" == "osx" ]; then 
@@ -21,8 +23,11 @@ install:
        source /opt/qt59/bin/qt59-env.sh
        ; 
   fi
-- cd ./3rdparty && ./build.sh && cd ./../
-- qmake -v
+- pushd ./3rdparty && ./build.sh && popd
+- pushd ./tests/integration/test_app && ./build.sh && popd
+- virtualenv .venv && source .venv/bin/activate && pip install .
+- oopsy_run_server --host 127.0.0.1 --port 8080
+- ./run_celery_worker.sh
 script:
-  - git submodule update --init --recursive 
-  - cd ./tests
+  - pushd ./tests/integration/test_app/bin && oopsy_send_symfile test_app
+  
