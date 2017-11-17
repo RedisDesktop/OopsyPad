@@ -1,0 +1,48 @@
+
+language: python
+dist: trusty
+sudo: required
+
+os:
+  - linux
+# - osx
+python:
+    - 3.6
+services:
+  - mongodb
+  
+install:
+- if [ "$TRAVIS_OS_NAME" == "osx" ]; then 
+       brew update > /dev/null
+    && brew install qt5 > /dev/null
+    && export PATH=/usr/local/opt/qt5/bin/:$PATH
+    ;
+  fi
+- if [ "$TRAVIS_OS_NAME" == "linux" ]; then
+       sudo add-apt-repository --yes ppa:beineri/opt-qt592-trusty &&
+       sudo apt-get update -y &&
+       sudo apt-get install qt59base -y &&
+       source /opt/qt59/bin/qt59-env.sh
+       ; 
+  fi
+- pushd ./3rdparty && ./build.sh && popd
+- pushd ./tests/integration/test_app && ./build.sh && popd
+- virtualenv .venv -p python3 && source .venv/bin/activate
+- python --version && which python
+- pip install .
+before_script:
+  - oopsy_run_server --host 127.0.0.1 --port 8080 & # FIX ME
+  - chmod +x run_celery_worker.sh && ./run_celery_worker.sh
+  - "export DISPLAY=:99.0"
+  - "sh -e /etc/init.d/xvfb start"
+  - sleep 3 # give xvfb some time to start
+  - "export PATH=`pwd`/3rdparty/breakpad/src/tools/linux/dump_syms:$PATH"
+script:
+  - pushd ./tests/integration/test_app/bin
+  - oopsy_send_symfile ./test_app test_app.sym http://127.0.0.1:8080 1.0.0
+  - ./test_app || true
+  - mongo oopsy_pad --eval "db.getCollectionNames()"
+  - mongo oopsy_pad --eval "db.minidump.find()"
+  - mongo oopsy_pad --eval "db.symFile.find()"
+  
+  

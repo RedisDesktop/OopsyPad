@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-celery -A oopsypad.server.worker._celery worker
+celery -D -A oopsypad.server.worker._celery worker
