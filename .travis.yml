@@ -28,12 +28,15 @@ install:
 - virtualenv .venv -p python3 && source .venv/bin/activate
 - python --version && which python
 - pip install .
-- oopsy_run_server --host 127.0.0.1 --port 8080 & # FIX ME
-- chmod +x run_celery_worker.sh && ./run_celery_worker.sh
-- Xvfb :10 &
-- export DISPLAY=:10
+before_script:
+  - oopsy_run_server --host 127.0.0.1 --port 8080 & # FIX ME
+  - chmod +x run_celery_worker.sh && ./run_celery_worker.sh
+  - "export DISPLAY=:99.0"
+  - "sh -e /etc/init.d/xvfb start"
+  - sleep 3 # give xvfb some time to start
+  - "export PATH=`pwd`/3rdparty/breakpad/src/tools/linux/dump_syms:$PATH"
 script:
   - pushd ./tests/integration/test_app/bin
   - oopsy_send_symfile ./test_app test_app.sym http://127.0.0.1:8080 1.0.0
-  - ./test_app
+  - ./test_app || true
   
