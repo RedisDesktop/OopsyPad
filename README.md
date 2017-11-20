@@ -20,7 +20,7 @@ To run the server use `oopsy_run_server` command.
 ```shell
 oopsy_run_server
 ```
-Optionally you can specify `host` and `port` which by default are `127.0.0.1` and `5000` respectively.
+Optionally you can specify `host`, `port` and `workers` (which by default are `127.0.0.1`, `8000` and `4` respectively) as well as any of [gunicorn options](http://docs.gunicorn.org/en/stable/settings.html).
 ```shell
 oopsy_run_server --host example.com --port 5050
 ```
@@ -33,12 +33,12 @@ After that run worker for minidump processing.
 Symbol files are necessary to decode minidump's binary data into human-readable stack trace.
 
 To generate symbol file and send it to the server use `send_symfile` function __or__ `oopsy_send_symfile` command.
-Here the required arguments are the `path` to the product executable file, a `name` for the resulting symbol file, site host `address` where `oopsypad` is hosted and the `version` of the product.
+Here the required arguments are the `bin_path` to the product executable file, a `symfile_name` for the resulting symbol file, site host `address` where `oopsypad` is hosted and the `version` of the product.
 Calling `send_symfile`:
 ```python
 from oopsypad.client.symfile import send_symfile
-send_symfile(path='/path/to/product/executable',
-             name='rdm.sym',
+send_symfile(bin_path='/path/to/product/executable',
+             symfile_name='rdm.sym',
              address='http://example.com',
              version='0.9')
 ```
@@ -74,6 +74,10 @@ curl -X POST \
 ```
 
 ## Configuration
+There are `prod` (default), `test` and `dev` environments available. To change configuration set environment variable `OOPSY_ENV`, e.g.:
+```shell
+export OOPSY_ENV=test
+```
 You may want to add some extra settings for OopsyPad.
 To do so you should specify the path to your configuration file as `OOPSYPAD_SETTINGS` environment variable:
 ```shell
