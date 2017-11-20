@@ -9,6 +9,7 @@ setup(
     name="oopsypad",
     version=VERSION,
     description='Breakpad minidump processing tool.',
+    license='GPLv3',
     install_requires=[
         'flask',
         'flask-admin',
