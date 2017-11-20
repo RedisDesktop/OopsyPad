@@ -19,19 +19,19 @@
         }
     </style>
     <h3>Issue Details</h3>
-    <table class="table table-hover">
+    <table id="issue-details-table" class="table table-hover">
         <tbody>
         <tr>
             <td>Platform:</td>
-            <td><b>{{ issue.platform }}</b></td>
+            <td id="issue-platform"><b>{{ issue.platform }}</b></td>
         </tr>
         <tr>
             <td>Version:</td>
-            <td><b>{{ issue.version }}</b></td>
+            <td id="issue-version"><b>{{ issue.version }}</b></td>
         </tr>
         <tr class="info">
             <td>Reason:</td>
-            <td><b>{{ issue.reason }}</b></td>
+            <td id="issue-reason"><b>{{ issue.reason }}</b></td>
         </tr>
         </tbody>
     </table>
@@ -39,7 +39,7 @@
 
     <h3>Stack Traces</h3>
     <div class="table-responsive">
-        <table class="table table-striped table-bordered table-hover model-list">
+        <table id="stacktraces-table" class="table table-striped table-bordered table-hover model-list">
             <thead>
             <tr>
                 <th>Time</th>
@@ -48,8 +48,8 @@
             </thead>
             {% for row in minidumps.items %}
                 <tr>
-                    <td>{{ row.get_time() }}</td>
-                    <td>
+                    <td class="col-time">{{ row.get_time() }}</td>
+                    <td class="col-stacktrace">
                         <pre class="stacktrace" title="Click to expand/collapse">{{ row.stacktrace }}</pre>
                     </td>
                 </tr>
