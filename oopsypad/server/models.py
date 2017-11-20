@@ -9,11 +9,12 @@ import os
 import subprocess
 from werkzeug.utils import secure_filename
 
+from oopsypad.server.config import Config, CWD
 from oopsypad.server.helpers import last_12_months
 
-DUMPS_DIR = "dumps"
-SYMFILES_DIR = "symbols"
-STACKWALKER = os.path.join(os.path.dirname(__file__), "./../../3rdparty/minidump-stackwalk/stackwalker")
+DUMPS_DIR = Config.DUMPS_DIR
+SYMFILES_DIR = Config.SYMFILES_DIR
+STACKWALKER = os.path.join(CWD, '../../3rdparty/minidump-stackwalk/stackwalker')
 
 
 class Minidump(mongo.Document):
@@ -53,13 +54,17 @@ class Minidump(mongo.Document):
 
     def get_stacktrace(self):
         minidump_path = self.get_minidump_path()
-        minidump_stackwalk_output = subprocess.check_output(['minidump_stackwalk', minidump_path, SYMFILES_DIR])
+        with open(os.devnull, 'w') as devnull:
+            minidump_stackwalk_output = subprocess.check_output(['minidump_stackwalk', minidump_path, SYMFILES_DIR],
+                                                                stderr=devnull)
         self.stacktrace = minidump_stackwalk_output.decode()
         self.save()
 
     def parse_stacktrace(self):
         minidump_path = self.get_minidump_path()
-        stackwalker_output = subprocess.check_output([STACKWALKER, '--pretty', minidump_path, SYMFILES_DIR])
+        with open(os.devnull, 'w') as devnull:
+            stackwalker_output = subprocess.check_output([STACKWALKER, '--pretty', minidump_path, SYMFILES_DIR],
+                                                         stderr=devnull)
         self.stacktrace_json = json.loads(stackwalker_output.decode())
         crash_info = self.stacktrace_json['crash_info']
         self.crash_reason = crash_info['type']
@@ -72,11 +77,15 @@ class Minidump(mongo.Document):
                                      reason=self.crash_reason)
 
     def create_stacktrace(self):
-        from oopsypad.server import worker
-        worker.process_minidump.delay(str(self.id))
+        from oopsypad.server.worker import process_minidump
+        process_minidump.delay(str(self.id))
 
     def get_time(self):
         return self.date_created.strftime('%d.%m.%Y %H:%M')
+
+    @classmethod
+    def get_by_id(cls, minidump_id):
+        return cls.objects.get(id=minidump_id)
 
     @classmethod
     def create_minidump(cls, request):
@@ -86,8 +95,8 @@ class Minidump(mongo.Document):
                        platform=data['platform'],
                        date_created=datetime.now())
 
-        cls.save_minidump(minidump, request)
-        cls.create_stacktrace(minidump)
+        minidump.save_minidump(request)
+        minidump.create_stacktrace()
         return minidump
 
     @classmethod
@@ -107,8 +116,8 @@ class Minidump(mongo.Document):
         return sorted(list(set([i.version for i in cls.objects(product=product)])))
 
     @classmethod
-    def get_last_n_project_minidumps(cls, n, project):
-        project_minidumps = cls.objects(product=project.name)
+    def get_last_n_project_minidumps(cls, n, project_name):
+        project_minidumps = cls.objects(product=project_name)
         return project_minidumps[:n]
 
     def __str__(self):
@@ -118,13 +127,14 @@ class Minidump(mongo.Document):
                                                 self.filename)
 
 
-class SymFile(mongo.Document):
+class Symfile(mongo.Document):
     product = fields.StringField()
     version = fields.StringField()
     platform = fields.StringField()
     symfile_name = fields.StringField()
     symfile_id = fields.StringField()
     symfile = fields.FileField()
+    date_created = fields.DateTimeField()
 
     def save_symfile(self, request):
         try:
@@ -144,15 +154,21 @@ class SymFile(mongo.Document):
     @classmethod
     def create_symfile(cls, request, product, id):
         data = request.form
-        symfile = cls(product=product,
-                      symfile_id=id,
-                      version=data['version'],
-                      platform=data['platform'])
-        cls.save_symfile(symfile, request)
+        try:
+            symfile = cls.objects.get(symfile_id=id)
+        except mongo.DoesNotExist:
+            symfile = cls(product=product,
+                          symfile_id=id,
+                          version=data['version'],
+                          platform=data['platform'],
+                          date_created=datetime.now())
+            symfile.save_symfile(request)
+        platform = Platform.create_platform(name=data['platform'])
+        Project.create_project(name=product, min_version=data['version'], allowed_platforms=[platform])
         return symfile
 
     def __str__(self):
-        return "<SymFile: {} {} {} {}>".format(self.product,
+        return "<Symfile: {} {} {} {}>".format(self.product,
                                                self.version,
                                                self.platform,
                                                self.symfile_id)
@@ -166,6 +182,22 @@ class Project(mongo.Document):
     def get_allowed_platforms(self):
         return [i.name for i in self.allowed_platforms]
 
+    @classmethod
+    def create_project(cls, name, min_version, allowed_platforms):
+        try:
+            project = cls.objects.get(name=name)
+            if min_version < project.min_version:
+                project.min_version = min_version
+            for p in allowed_platforms:
+                if p not in project.allowed_platforms:
+                    project.allowed_platforms.append(p)
+        except mongo.DoesNotExist:
+            project = cls(name=name,
+                          min_version=min_version,
+                          allowed_platforms=allowed_platforms)
+        project.save()
+        return project
+
     def __str__(self):
         return "<Project: {} {} {}>".format(self.name,
                                             self.min_version,
@@ -173,8 +205,18 @@ class Project(mongo.Document):
 
 
 class Platform(mongo.Document):
-    platforms = ['Linux', 'MacOS', 'Windows']
-    name = fields.StringField(required=True, unique=True, choices=platforms)
+    # platforms = ['Linux', 'MacOS', 'Windows']
+    name = fields.StringField(required=True, unique=True)
+    # name = fields.StringField(required=True, unique=True, choices=platforms)
+
+    @classmethod
+    def create_platform(cls, name):
+        try:
+            platform = Platform.objects.get(name=name)
+        except mongo.DoesNotExist:
+            platform = cls(name=name)
+            platform.save()
+        return platform
 
     def __str__(self):
         return self.name
@@ -208,8 +250,8 @@ class Issue(mongo.Document):
         return issue
 
     @classmethod
-    def get_top_n_project_issues(cls, n, project):
-        return cls.objects(product=project.name)[:n]
+    def get_top_n_project_issues(cls, n, project_name):
+        return cls.objects(product=project_name)[:n]
 
     def __str__(self):
         return "<Issue: {} {} {} {} {}>".format(self.product,

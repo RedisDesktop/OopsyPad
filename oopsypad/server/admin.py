@@ -70,8 +70,8 @@ class ProjectView(ModelView):
     def details_view(self):
         project = models.Project.objects.get(id=request.args.get('id'))
         minidump_versions = models.Minidump.get_versions_per_product(product=project.name)
-        last_10_minidumps = models.Minidump.get_last_n_project_minidumps(n=10, project=project)
-        issues = models.Issue.get_top_n_project_issues(n=10, project=project)
+        last_10_minidumps = models.Minidump.get_last_n_project_minidumps(n=10, project_name=project.name)
+        issues = models.Issue.get_top_n_project_issues(n=10, project_name=project.name)
         return self.render('admin/project_overview.html',
                            project=project,
                            versions=minidump_versions,
