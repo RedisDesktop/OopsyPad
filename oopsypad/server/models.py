@@ -1,5 +1,6 @@
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+from flask import current_app
 from flask_mongoengine import BaseQuerySet
 import json
 import mongoengine as mongo
@@ -14,6 +15,7 @@ from oopsypad.server.helpers import last_12_months
 
 DUMPS_DIR = Config.DUMPS_DIR
 SYMFILES_DIR = Config.SYMFILES_DIR
+MINIDUMP_STACKWALK = os.path.join(Config.ROOT_DIR, '3rdparty/breakpad/src/processor/minidump_stackwalk')
 STACKWALKER = os.path.join(Config.ROOT_DIR, '3rdparty/minidump-stackwalk/stackwalker')
 
 
@@ -47,34 +49,42 @@ class Minidump(mongo.Document):
                     self.minidump.put(minidump)
             self.save()
         except (KeyError, AttributeError) as e:
-            raise e
+            current_app.logger.exception(e)
+        except Exception as e:
+            current_app.logger.exception(e)
 
     def get_minidump_path(self):
         return os.path.join(DUMPS_DIR, self.filename)
 
     def get_stacktrace(self):
         minidump_path = self.get_minidump_path()
-        with open(os.devnull, 'w') as devnull:
-            minidump_stackwalk_output = subprocess.check_output(['minidump_stackwalk', minidump_path, SYMFILES_DIR],
-                                                                stderr=devnull)
-        self.stacktrace = minidump_stackwalk_output.decode()
-        self.save()
+        try:
+            minidump_stackwalk_output = subprocess.check_output([MINIDUMP_STACKWALK, minidump_path, SYMFILES_DIR],
+                                                                stderr=subprocess.DEVNULL)
+            self.stacktrace = minidump_stackwalk_output.decode()
+            self.save()
+        except subprocess.CalledProcessError as e:
+            current_app.logger.exception(e)
 
     def parse_stacktrace(self):
         minidump_path = self.get_minidump_path()
-        with open(os.devnull, 'w') as devnull:
+        try:
             stackwalker_output = subprocess.check_output([STACKWALKER, '--pretty', minidump_path, SYMFILES_DIR],
-                                                         stderr=devnull)
-        self.stacktrace_json = json.loads(stackwalker_output.decode())
-        crash_info = self.stacktrace_json['crash_info']
-        self.crash_reason = crash_info['type']
-        self.crash_address = crash_info['address']
-        self.crash_thread = crash_info['crashing_thread']
-        self.save()
-        Issue.create_or_update_issue(product=self.product,
-                                     version=self.version,
-                                     platform=self.platform,
-                                     reason=self.crash_reason)
+                                                         stderr=subprocess.DEVNULL)
+            self.stacktrace_json = json.loads(stackwalker_output.decode())
+            crash_info = self.stacktrace_json['crash_info']
+            self.crash_reason = crash_info['type']
+            self.crash_address = crash_info['address']
+            self.crash_thread = crash_info['crashing_thread']
+            self.save()
+            Issue.create_or_update_issue(product=self.product,
+                                         version=self.version,
+                                         platform=self.platform,
+                                         reason=self.crash_reason)
+        except (KeyError, AttributeError) as e:
+            current_app.logger.exception(e)
+        except subprocess.CalledProcessError as e:
+            current_app.logger.exception(e)
 
     def create_stacktrace(self):
         from oopsypad.server.worker import process_minidump
@@ -145,8 +155,10 @@ class Symfile(mongo.Document):
                 os.makedirs(target_path)
             file.save(os.path.join(target_path, self.symfile_name))
             self.save()
-        except(KeyError, AttributeError) as e:
-            raise e
+        except (KeyError, AttributeError) as e:
+            current_app.logger.exception(e)
+        except Exception as e:
+            current_app.logger.exception(e)
 
     def get_symfile_path(self):
         return os.path.join(SYMFILES_DIR, self.product, self.symfile_id)
@@ -205,9 +217,7 @@ class Project(mongo.Document):
 
 
 class Platform(mongo.Document):
-    # platforms = ['Linux', 'MacOS', 'Windows']
     name = fields.StringField(required=True, unique=True)
-    # name = fields.StringField(required=True, unique=True, choices=platforms)
 
     @classmethod
     def create_platform(cls, name):

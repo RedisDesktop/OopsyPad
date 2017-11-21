@@ -54,5 +54,6 @@ script:
   - mongo oopsy_pad_test --eval "db.minidump.find()"
   - mongo oopsy_pad_test --eval "db.symfile.find()"
   - python setup.py test
-  
+  - cat celery.log
+  - cat oopsy.log
   

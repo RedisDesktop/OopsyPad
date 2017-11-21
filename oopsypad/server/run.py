@@ -18,6 +18,7 @@ app = create_app()
 @click.argument('gunicorn_options', nargs=-1, type=click.UNPROCESSED)
 def run_server(host, port, workers, gunicorn_options):
     os.chdir(app.root_path)
+    app.logger.info('Running OopsyPad from {}.'.format(app.root_path))
     subprocess.run(['gunicorn',
                     '-w {}'.format(workers),
                     '-b {}:{}'.format(host, port),

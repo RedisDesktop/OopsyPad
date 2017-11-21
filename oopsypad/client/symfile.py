@@ -11,7 +11,7 @@ DUMP_SYMS = os.path.join(Config.ROOT_DIR, DUMP_SYMS_PATH)
 
 
 def create_symfile(bin_path, symfile_name, symfile_root):
-    dump_syms_output = subprocess.check_output([DUMP_SYMS, bin_path])
+    dump_syms_output = subprocess.check_output([DUMP_SYMS, bin_path], stderr=subprocess.DEVNULL)
     with open(symfile_name, 'wb') as f:
         f.write(dump_syms_output)
 

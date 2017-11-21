@@ -1,5 +1,7 @@
 from flask import Flask
 from flask_mongoengine import MongoEngine
+import logging
+from logging.handlers import RotatingFileHandler
 import os
 
 from oopsypad.server.admin import admin
@@ -27,6 +29,11 @@ def create_app(config_name=None):
     db.init_app(app)
     admin.init_app(app)
     app.register_blueprint(oopsy)
+    handler = RotatingFileHandler('oopsy.log', maxBytes=1024 * 1024 * 100, backupCount=10)
+    handler.setLevel(logging.DEBUG)
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    handler.setFormatter(formatter)
+    app.logger.addHandler(handler)
     return app
 
 

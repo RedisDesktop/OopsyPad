@@ -1,4 +1,5 @@
 from celery import Celery
+from celery.utils.log import get_task_logger
 
 import flask_mongoengine as mongo
 
@@ -25,13 +26,16 @@ def make_celery(app):
 
 celery = make_celery(app)
 
+logger = get_task_logger(__name__)
+
 
 @celery.task
 def process_minidump(minidump_id):
+    logger.warning("Processing minidump {}...".format(minidump_id))
     try:
         minidump = models.Minidump.get_by_id(minidump_id)
         minidump.get_stacktrace()
         minidump.parse_stacktrace()
-        print("Minidump {} processed.".format(minidump_id))
+        logger.info("Minidump {} processed.".format(minidump_id))
     except mongo.DoesNotExist:
-        print("Minidump with id {} was not found.".format(minidump_id))
+        logger.warning("Minidump {} was not found.".format(minidump_id))
