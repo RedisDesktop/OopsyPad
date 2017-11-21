@@ -1,4 +1,6 @@
 import os
+import subprocess
+
 CWD = os.path.dirname(os.path.abspath(__file__))
 DEV, TEST, PROD = 'dev', 'test', 'prod'
 
@@ -16,8 +18,10 @@ class Config:
 
     CELERY_BROKER_URL = 'redis://localhost:6379/1'
     CELERY_RESULT_BACKEND = 'redis://localhost:6379/1'
+
     DUMPS_DIR = os.path.join(CWD, 'dumps')
     SYMFILES_DIR = os.path.join(CWD, 'symbols')
+    ROOT_DIR = subprocess.check_output(['git', 'rev-parse', '--show-toplevel']).rstrip().decode()
 
 
 class DevConfig(Config):

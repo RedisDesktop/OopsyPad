@@ -9,12 +9,12 @@ import os
 import subprocess
 from werkzeug.utils import secure_filename
 
-from oopsypad.server.config import Config, CWD
+from oopsypad.server.config import Config
 from oopsypad.server.helpers import last_12_months
 
 DUMPS_DIR = Config.DUMPS_DIR
 SYMFILES_DIR = Config.SYMFILES_DIR
-STACKWALKER = os.path.join(CWD, '../../3rdparty/minidump-stackwalk/stackwalker')
+STACKWALKER = os.path.join(Config.ROOT_DIR, '3rdparty/minidump-stackwalk/stackwalker')
 
 
 class Minidump(mongo.Document):

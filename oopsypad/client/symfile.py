@@ -4,10 +4,10 @@ import requests
 import shutil
 import subprocess
 
-from oopsypad.server.config import Config, CWD
+from oopsypad.server.config import Config
 
 DUMP_SYMS_PATH = '3rdparty/breakpad/src/tools/linux/dump_syms/dump_syms'
-DUMP_SYMS = os.path.join(CWD, '../..', DUMP_SYMS_PATH)
+DUMP_SYMS = os.path.join(Config.ROOT_DIR, DUMP_SYMS_PATH)
 
 
 def create_symfile(bin_path, symfile_name, symfile_root):
