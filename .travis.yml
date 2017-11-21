@@ -48,6 +48,6 @@ script:
   - mongo oopsy_pad_test --eval "db.getCollectionNames()"
   - mongo oopsy_pad_test --eval "db.minidump.find()"
   - mongo oopsy_pad_test --eval "db.symfile.find()"
-  - python oopsypad/tests/test_oopsypad.py
+  - python setup.py test
   
   

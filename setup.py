@@ -24,6 +24,7 @@ setup(
         'selenium',
         'flask-testing',
     ],
+    test_suite='oopsypad.tests',
     packages=find_packages(),
     include_package_data=True,
     zip_safe=False,
