@@ -163,8 +163,8 @@ class Symfile(mongo.Document):
                           platform=data['platform'],
                           date_created=datetime.now())
             symfile.save_symfile(request)
-        platform = Platform.create_platform(name=data['platform'])
-        Project.create_project(name=product, min_version=data['version'], allowed_platforms=[platform])
+            platform = Platform.create_platform(name=data['platform'])
+            Project.create_project(name=product, min_version=data['version'], allowed_platforms=[platform])
         return symfile
 
     def __str__(self):
