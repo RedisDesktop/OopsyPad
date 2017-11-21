@@ -40,7 +40,7 @@ class TestBase(LiveServerTestCase):
         self.browser.quit()
         if hasattr(self, 'patch_celery_worker'):
             self.patch_celery_worker.stop()
-        # self.drop_db()
+        self.drop_db()
 
     def click_element(self, element_id=None, element_xpath=None):
         if element_id:
