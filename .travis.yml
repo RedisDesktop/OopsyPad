@@ -50,9 +50,6 @@ script:
   - pushd ./tests/integration/test_app/bin
   - oopsy_send_symfile ./test_app test_app.sym http://127.0.0.1:8080 1.0.0
   - ./test_app || true && popd
-  - mongo oopsy_pad_test --eval "db.getCollectionNames()"
-  - mongo oopsy_pad_test --eval "db.minidump.find()"
-  - mongo oopsy_pad_test --eval "db.symfile.find()"
   - python setup.py test
   - cat celery.log
   - cat oopsy.log
