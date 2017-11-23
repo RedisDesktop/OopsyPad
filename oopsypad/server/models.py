@@ -175,8 +175,6 @@ class Symfile(mongo.Document):
                           platform=data['platform'],
                           date_created=datetime.now())
             symfile.save_symfile(request)
-            platform = Platform.create_platform(name=data['platform'])
-            Project.create_project(name=product, min_version=data['version'], allowed_platforms=[platform])
         return symfile
 
     def __str__(self):
@@ -194,26 +192,29 @@ class Project(mongo.Document):
     def get_allowed_platforms(self):
         return [i.name for i in self.allowed_platforms]
 
+    def update_min_version(self, version):
+        self.min_version = version
+        self.save()
+
+    def add_allowed_platform(self, platform):
+        if platform not in self.allowed_platforms:
+            self.allowed_platforms.append(platform)
+            self.save()
+
     @classmethod
-    def create_project(cls, name, min_version, allowed_platforms):
+    def create_project(cls, name):
         try:
             project = cls.objects.get(name=name)
-            if min_version < project.min_version:
-                project.min_version = min_version
-            for p in allowed_platforms:
-                if p not in project.allowed_platforms:
-                    project.allowed_platforms.append(p)
         except mongo.DoesNotExist:
-            project = cls(name=name,
-                          min_version=min_version,
-                          allowed_platforms=allowed_platforms)
-        project.save()
+            project = cls(name=name)
+            project.save()
         return project
 
     def __str__(self):
         return "<Project: {} {} {}>".format(self.name,
-                                            self.min_version,
-                                            self.allowed_platforms)
+                                            self.min_version if self.min_version else '~no min version',
+                                            self.allowed_platforms if self.allowed_platforms
+                                            else '~no allowed platforms')
 
 
 class Platform(mongo.Document):
@@ -229,6 +230,9 @@ class Platform(mongo.Document):
         return platform
 
     def __str__(self):
+        return self.name
+
+    def __repr__(self):
         return self.name
 
 

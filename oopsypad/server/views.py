@@ -40,6 +40,32 @@ def add_symfile(product, id):
         return jsonify({"error": "Something went wrong: {}".format(e)}), 400
 
 
+@oopsy.route('/project/<name>', methods=['POST'])
+def add_project(name):
+    try:
+        project = models.Project.create_project(name=name)
+        min_version = request.form.get('min_version', None)
+        if min_version:
+            project.update_min_version(min_version)
+        allowed_platforms = request.form.getlist('allowed_platforms', None)
+        if allowed_platforms:
+            for p in allowed_platforms:
+                platform = models.Platform.create_platform(p)
+                project.add_allowed_platform(platform)
+        return jsonify({"ok": "{} project was saved: {}".format(name, project)}), 201
+    except Exception as e:
+        return jsonify({"error": "Something went wrong: {}".format(e)}), 400
+
+
+@oopsy.route('/project/<name>/delete', methods=['DELETE'])
+def delete_project(name):
+    try:
+        models.Project.objects.get(name=name).delete()
+        return jsonify({"ok": "{} project was deleted.".format(name)}), 202
+    except Exception as e:
+        return jsonify({"error": "Something went wrong: {}".format(e)}), 400
+
+
 @oopsy.errorhandler(404)
 def not_found(e):
     return jsonify(error=404, text=str(e)), 404

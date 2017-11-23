@@ -46,7 +46,15 @@ Or the same thing for command line:
 ```shell
 oopsy_send_symfile path/to/product/executable rdm.sym http://example.com 0.9
 ```
-
+### Projects
+Before sending any dump files to the server you'll first need to send your project information including name, minimum allowed version `-v` and allowed platforms `-p` using `oopsy_admin` command, e.g.:
+```shell
+oopsy_admin http://example.com rdm -v 0.9 -p Linux -p MacOS -p Windows
+```
+To delete unwanted project use `--delete` flag:
+```shell
+oopsy_admin http://example.com rdm --delete
+```
 ### Minidumps processing
 Send minidumps for processing by calling the `send_minidump` function as in example below __or__ with `oopsy_send_minidump` command __or__ by sending a POST request to the `/crash-report` endpoint with the minidump file specified as an `upload_file_minidump` parameter as well as a `product` name, its `version` and a `platform`.
 

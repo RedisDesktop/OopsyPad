@@ -47,6 +47,7 @@ before_script:
   - "sh -e /etc/init.d/xvfb start"
   - sleep 3 # give xvfb some time to start
 script:
+  - oopsy_admin http://127.0.0.1:8080 test_app -v 1.0 -p Linux
   - pushd ./tests/integration/test_app/bin
   - oopsy_send_symfile ./test_app test_app.sym http://127.0.0.1:8080 1.0.0
   - ./test_app || true && popd

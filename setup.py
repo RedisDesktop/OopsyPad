@@ -3,7 +3,7 @@ import sys
 
 assert sys.version_info >= (3,), 'Python 3 is required'
 
-VERSION = '0.1.0-alpha'
+VERSION = '0.1.1-alpha'
 
 setup(
     name="oopsypad",
@@ -32,6 +32,7 @@ setup(
         'console_scripts':
             ['oopsy_run_server = oopsypad.server.run:run_server',
              'oopsy_send_symfile = oopsypad.client.symfile:upload_symfile',
-             'oopsy_send_minidump = oopsypad.client.minidump:upload_minidump']
+             'oopsy_send_minidump = oopsypad.client.minidump:upload_minidump',
+             'oopsy_admin = oopsypad.client.admin:save_project']
     }
 )
