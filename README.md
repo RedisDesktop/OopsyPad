@@ -6,6 +6,7 @@ OopsyPad is a Breakpad minidumps processing tool for [RedisDesktopManager](https
 
 ## Requirements
 - `Python 3`
+- `MongoDB`
 
 ## Installation
 ```shell
@@ -14,8 +15,10 @@ cd OopsyPad/
 ./3rdparty/build.sh
 pip install .
 ```
+Install and run [`MongoDB`](https://docs.mongodb.com/manual/installation/).
 
 ## Usage
+
 To run the server use `oopsy_run_server` command.
 ```shell
 oopsy_run_server
