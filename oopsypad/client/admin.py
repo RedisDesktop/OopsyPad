@@ -1,19 +1,8 @@
 import click
 import os
 import requests
-import urllib3
 
-
-class OopsyGroup(click.Group):
-    def __call__(self, *args, **kwargs):
-        try:
-            return self.main(*args, **kwargs)
-        except urllib3.exceptions.NewConnectionError as e:
-            click.echo('Unable to connect to server ({}).'.format(e))
-        except requests.exceptions.MissingSchema as e:
-            click.echo('Invalid address ({}).'.format(e))
-        except TypeError as e:
-            click.echo('Error: {}'.format(e))
+from oopsypad.client.base import OopsyGroup
 
 
 @click.group(name='oopsy_admin', cls=OopsyGroup)
@@ -26,9 +15,8 @@ def oopsy_admin(ctx):
 @click.pass_context
 def project(ctx):
     address = ctx.obj['ADDRESS'] = os.environ.get('OOPSY_HOST')
-    click.echo(address)
     if not address:
-        raise TypeError('OOPSY_HOST variable was not specified.')
+        raise click.UsageError('OOPSY_HOST environment variable was not specified.')
 
 
 @project.command(name='add')

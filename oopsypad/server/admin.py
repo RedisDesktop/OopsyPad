@@ -6,6 +6,7 @@ from flask_admin import Admin, AdminIndexView, expose
 from flask_admin.contrib.mongoengine import ModelView
 from flask_admin.model.template import macro
 import random
+import warnings
 
 from oopsypad.server.helpers import last_12_months
 from oopsypad.server import models
@@ -151,7 +152,9 @@ admin = Admin(
         url="/")
 )
 
-admin.add_view(ProjectView(models.Project, name='Projects'))
-admin.add_view(ModelView(models.Platform, name='Platforms'))
-admin.add_view(CrashReportView(models.Minidump, name='Crash Reports', endpoint='crash-reports'))
-admin.add_view(IssueView(models.Issue, name='Issues'))
+with warnings.catch_warnings():
+    warnings.filterwarnings('ignore', 'Fields missing from ruleset', UserWarning)
+    admin.add_view(ProjectView(models.Project, name='Projects'))
+    admin.add_view(ModelView(models.Platform, name='Platforms'))
+    admin.add_view(CrashReportView(models.Minidump, name='Crash Reports', endpoint='crash-reports'))
+    admin.add_view(IssueView(models.Issue, name='Issues'))
