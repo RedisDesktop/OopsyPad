@@ -1,22 +1,19 @@
 import click
-import os
+
 import requests
 
-from oopsypad.client.base import OopsyGroup
+from oopsypad.client.base import oopsy, get_address
 
 
-@click.group(name='oopsy_admin', cls=OopsyGroup)
+@oopsy.group(name='oopsy_admin')
 @click.pass_context
 def oopsy_admin(ctx):
-    ctx.obj = {}
+    get_address(ctx)
 
 
 @oopsy_admin.group(name='project')
-@click.pass_context
-def project(ctx):
-    address = ctx.obj['ADDRESS'] = os.environ.get('OOPSY_HOST')
-    if not address:
-        raise click.UsageError('OOPSY_HOST environment variable was not specified.')
+def project():
+    pass
 
 
 @project.command(name='add')

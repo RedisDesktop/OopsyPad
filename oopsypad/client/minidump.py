@@ -1,18 +1,17 @@
 import click
 import requests
 
+from oopsypad.client.base import oopsy, get_address
 
-@click.command(name='oopsy_send_minidump')
-@click.argument('address')
+
+@oopsy.command(name='oopsy_send_minidump')
 @click.argument('dump-path')
 @click.argument('product')
 @click.argument('version')
 @click.argument('platform')
-def oopsy_send_minidump(address, dump_path, product, version, platform):
+def oopsy_send_minidump(dump_path, product, version, platform):
     """
     \b
-    ADDRESS
-        OopsyPad host address.
     DUMP-PATH
         Minidump file path.
     PRODUCT
@@ -22,7 +21,7 @@ def oopsy_send_minidump(address, dump_path, product, version, platform):
     PLATFORM
         Platform that the product is running on (Linux, MacOS, Windows).
     """
-    response = send_minidump(address, dump_path, product, version, platform)
+    response = send_minidump(get_address(), dump_path, product, version, platform)
     print(response.text)
 
 

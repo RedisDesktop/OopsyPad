@@ -4,6 +4,7 @@ import requests
 import shutil
 import subprocess
 
+from oopsypad.client.base import oopsy, get_address
 from oopsypad.server.config import Config
 
 DUMP_SYMS_PATH = '3rdparty/breakpad/src/tools/linux/dump_syms/dump_syms'
@@ -27,24 +28,21 @@ def create_symfile(bin_path, symfile_name, symfile_root):
     return symfile_path
 
 
-@click.command(name='oopsy_send_symfile')
+@oopsy.command(name='oopsy_send_symfile')
 @click.argument('bin-path')
 @click.argument('symfile-name')
-@click.argument('address')
 @click.argument('version')
-def oopsy_send_symfile(bin_path, symfile_name, address, version):
+def oopsy_send_symfile(bin_path, symfile_name, version):
     """
     \b
     BIN-PATH
         Product executable binary path.
     SYMFILE-NAME
         Target symbol file name.
-    ADDRESS
-        OopsyPad host address.
     VERSION
         Product version.
     """
-    response = send_symfile(bin_path, symfile_name, address, version)
+    response = send_symfile(bin_path, symfile_name, get_address(), version)
     print(response.text)
 
 
@@ -57,3 +55,5 @@ def send_symfile(bin_path, symfile_name, address, version):
         data = {'version': version, 'platform': platform}
         r = requests.post("{}/data/symfiles/{}/{}".format(address, product, id), data=data, files=files)
     return r
+
+
