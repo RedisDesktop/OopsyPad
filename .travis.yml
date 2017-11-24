@@ -14,6 +14,7 @@ services:
 env:
   global:
     - MOZ_HEADLESS=1
+    - OOPSY_HOST=http://127.0.0.1:8080
     - OOPSY_ENV=test
 addons:
   firefox: latest
@@ -41,15 +42,15 @@ before_script:
   - mkdir geckodriver
   - tar -xzf geckodriver-v0.19.0-linux64.tar.gz -C geckodriver
   - export PATH=$PWD/geckodriver/:$PATH
-  - oopsy_run_server --host 127.0.0.1 --port 8080 & # FIX ME
+  - oopsy_run_server --host 127.0.0.1 --port 8080 -D
   - chmod +x run_celery_worker.sh && ./run_celery_worker.sh
   - "export DISPLAY=:99.0"
   - "sh -e /etc/init.d/xvfb start"
   - sleep 3 # give xvfb some time to start
 script:
-  - oopsy_admin http://127.0.0.1:8080 test_app -v 1.0 -p Linux
+  - oopsy_admin project add test_app -v 1.0 -p Linux
   - pushd ./tests/integration/test_app/bin
-  - oopsy_send_symfile ./test_app test_app.sym http://127.0.0.1:8080 1.0.0
+  - oopsy_send_symfile ./test_app test_app.sym 1.0.0
   - ./test_app || true && popd
   - python setup.py test
   - cat celery.log
