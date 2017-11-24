@@ -20,7 +20,7 @@ To run the server use `oopsy_run_server` command.
 ```shell
 oopsy_run_server
 ```
-Optionally you can specify `host`, `port` and `workers` (which by default are `127.0.0.1`, `8000` and `4` respectively) as well as any of [gunicorn options](http://docs.gunicorn.org/en/stable/settings.html).
+Optionally you can specify `host`, `port` and `workers` (which by default are `127.0.0.1`, `8000` and `4` respectively) as well as any of other [gunicorn options](http://docs.gunicorn.org/en/stable/settings.html).
 ```shell
 oopsy_run_server --host example.com --port 5050
 ```
@@ -28,13 +28,24 @@ After that run worker for minidump processing.
 ```shell
 ./run_celery_worker.sh
 ```
+In case the file is not executable yet:
+```shell
+chmod +x run_celery_worker.sh
+```
+
+### OOPSY_HOST 
+To use client shell commands you need to specify OOPSY_HOST environment variable which is OopsyPad host address.
+```shell
+export OOPSY_HOST=http://example.com
+```
 
 ### Symbol files
 Symbol files are necessary to decode minidump's binary data into human-readable stack trace.
 
 To generate symbol file and send it to the server use `send_symfile` function __or__ `oopsy_send_symfile` command.
-Here the required arguments are the `bin_path` to the product executable file, a `symfile_name` for the resulting symbol file, site host `address` where `oopsypad` is hosted and the `version` of the product.
-Calling `send_symfile`:
+Here the required arguments are the `bin-path` to the product executable file, a `symfile-name` for the resulting symbol file, site host `address` where `oopsypad` is hosted and the `version` of the product.
+
+`send_symfile` call example:
 ```python
 from oopsypad.client.symfile import send_symfile
 send_symfile(bin_path='/path/to/product/executable',
@@ -42,23 +53,31 @@ send_symfile(bin_path='/path/to/product/executable',
              address='http://example.com',
              version='0.9')
 ```
-Or the same thing for command line:
+`oopsy_send_symfile` command:
 ```shell
-oopsy_send_symfile path/to/product/executable rdm.sym http://example.com 0.9
+oopsy_send_symfile path/to/product/executable rdm.sym 0.9
 ```
-### Projects
-Before sending any dump files to the server you'll first need to send your project information including name, minimum allowed version `-v` and allowed platforms `-p` using `oopsy_admin` command, e.g.:
-```shell
-oopsy_admin http://example.com rdm -v 0.9 -p Linux -p MacOS -p Windows
-```
-To delete unwanted project use `--delete` flag:
-```shell
-oopsy_admin http://example.com rdm --delete
-```
-### Minidumps processing
-Send minidumps for processing by calling the `send_minidump` function as in example below __or__ with `oopsy_send_minidump` command __or__ by sending a POST request to the `/crash-report` endpoint with the minidump file specified as an `upload_file_minidump` parameter as well as a `product` name, its `version` and a `platform`.
 
-Example of using the `send_minidump` function:
+### Projects
+Before sending any dump files to the server you'll first need to send your project information including name, minimum allowed version `-v` and allowed platforms `-p` using `oopsy_admin project add` command, e.g.:
+```shell
+oopsy_admin project add rdm -v 0.9 -p Linux -p MacOS -p Windows
+```
+To delete unwanted project use `oopsy_admin project delete` command:
+```shell
+oopsy_admin project delete notrdm
+```
+To list all projects use:
+```shell
+oopsy_admin project list
+```
+
+### Minidumps processing
+Send minidumps for processing by calling the `send_minidump` function as in example below 
+__or__ with `oopsy_send_minidump` command 
+__or__ by sending a POST request to the `/crash-report` endpoint with a `product` name, its `version` and a `platform` parameters and the minidump file specified as an `upload_file_minidump` parameter.
+
+`send_minidump` function usage:
 ```python
 from oopsypad.client.minidump import send_minidump
 send_minidump(address='http://example.com',
@@ -67,9 +86,9 @@ send_minidump(address='http://example.com',
               version='0.9',
               platform='Linux')
 ```
-Using command line:
+`oopsy_send_minidump` command:
 ```shell
-oopsy_send_minidump http://example.com /path/to/minidump rdm 0.9 Linux
+oopsy_send_minidump /path/to/minidump rdm 0.9 Linux
 ```
 POST request using `curl`:
 ```shell
