@@ -30,9 +30,9 @@ setup(
     zip_safe=False,
     entry_points={
         'console_scripts':
-            ['oopsy_run_server = oopsypad.server.run:run_server',
-             'oopsy_send_symfile = oopsypad.client.symfile:upload_symfile',
-             'oopsy_send_minidump = oopsypad.client.minidump:upload_minidump',
-             'oopsy_admin = oopsypad.client.admin:save_project']
+            ['oopsy_run_server = oopsypad.server.run:oopsy_run_server',
+             'oopsy_send_symfile = oopsypad.client.symfile:oopsy_send_symfile',
+             'oopsy_send_minidump = oopsypad.client.minidump:oopsy_send_minidump',
+             'oopsy_admin = oopsypad.client.admin:oopsy_admin']
     }
 )

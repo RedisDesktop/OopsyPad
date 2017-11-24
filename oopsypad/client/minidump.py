@@ -2,18 +2,18 @@ import click
 import requests
 
 
-@click.command()
+@click.command(name='oopsy_send_minidump')
 @click.argument('address')
-@click.argument('dump_path')
+@click.argument('dump-path')
 @click.argument('product')
 @click.argument('version')
 @click.argument('platform')
-def upload_minidump(address, dump_path, product, version, platform):
+def oopsy_send_minidump(address, dump_path, product, version, platform):
     """
     \b
     ADDRESS
         OopsyPad host address.
-    DUMP_PATH
+    DUMP-PATH
         Minidump file path.
     PRODUCT
         Product name.

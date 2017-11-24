@@ -27,17 +27,17 @@ def create_symfile(bin_path, symfile_name, symfile_root):
     return symfile_path
 
 
-@click.command()
-@click.argument('bin_path')
-@click.argument('symfile_name')
+@click.command(name='oopsy_send_symfile')
+@click.argument('bin-path')
+@click.argument('symfile-name')
 @click.argument('address')
 @click.argument('version')
-def upload_symfile(bin_path, symfile_name, address, version):
+def oopsy_send_symfile(bin_path, symfile_name, address, version):
     """
     \b
-    BIN_PATH
+    BIN-PATH
         Product executable binary path.
-    SYMFILE_NAME
+    SYMFILE-NAME
         Target symbol file name.
     ADDRESS
         OopsyPad host address.
