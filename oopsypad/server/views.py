@@ -66,6 +66,15 @@ def delete_project(name):
         return jsonify({"error": "Something went wrong: {}".format(e)}), 400
 
 
+@oopsy.route('/project/all')
+def list_projects():
+    try:
+        projects = [str(p) for p in models.Project.objects()]
+        return jsonify(projects=projects), 200
+    except Exception as e:
+        return jsonify({"error": "Something went wrong: {}".format(e)}), 418
+
+
 @oopsy.errorhandler(404)
 def not_found(e):
     return jsonify(error=404, text=str(e)), 404
