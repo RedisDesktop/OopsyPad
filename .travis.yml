@@ -36,7 +36,7 @@ install:
 - pushd ./tests/integration/test_app && ./build.sh && popd
 - virtualenv .venv -p python3 && source .venv/bin/activate
 - python --version && which python
-- pip install .
+- pip setup.py install
 before_script:
   - wget https://github.com/mozilla/geckodriver/releases/download/v0.19.0/geckodriver-v0.19.0-linux64.tar.gz
   - mkdir geckodriver
