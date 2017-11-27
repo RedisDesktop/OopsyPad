@@ -11,7 +11,7 @@ setup(
     description='Breakpad minidump processing tool.',
     license='GPLv3',
     install_requires=[
-        'flask',
+        'Flask>=0.12',
         'flask-admin',
         'flask-mongoengine',
         'redis',
