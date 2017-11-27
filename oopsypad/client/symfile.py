@@ -4,13 +4,17 @@ import requests
 import shutil
 import subprocess
 
-from oopsypad.server.views import app
+from oopsypad.client.base import oopsy, get_address
+from oopsypad.server.config import Config
+
+DUMP_SYMS_PATH = '3rdparty/breakpad/src/tools/linux/dump_syms/dump_syms'
+DUMP_SYMS = os.path.join(Config.ROOT_DIR, DUMP_SYMS_PATH)
 
 
 def create_symfile(bin_path, symfile_name, symfile_root):
-    dump_syms_output = subprocess.run(['dump_syms', bin_path], stdout=subprocess.PIPE)
+    dump_syms_output = subprocess.check_output([DUMP_SYMS, bin_path], stderr=subprocess.DEVNULL)
     with open(symfile_name, 'wb') as f:
-        f.write(dump_syms_output.stdout)
+        f.write(dump_syms_output)
 
     with open(symfile_name, 'r') as f:
         _, _, _, id, product = f.readline().split()
@@ -24,29 +28,26 @@ def create_symfile(bin_path, symfile_name, symfile_root):
     return symfile_path
 
 
-@click.command()
-@click.argument('path')
-@click.argument('name')
-@click.argument('address')
+@oopsy.command(name='oopsy_send_symfile')
+@click.argument('bin-path')
+@click.argument('symfile-name')
 @click.argument('version')
-def upload_symfile(path, name, address, version):
+def oopsy_send_symfile(bin_path, symfile_name, version):
     """
     \b
-    PATH
+    BIN-PATH
         Product executable binary path.
-    NAME
+    SYMFILE-NAME
         Target symbol file name.
-    ADDRESS
-        OopsyPad host address.
     VERSION
         Product version.
     """
-    response = send_symfile(path, name, address, version)
+    response = send_symfile(bin_path, symfile_name, get_address(), version)
     print(response.text)
 
 
-def send_symfile(path, name, address, version):
-    symfile_path = create_symfile(path, name, app.config['SYMFILES_DIR'])
+def send_symfile(bin_path, symfile_name, address, version):
+    symfile_path = create_symfile(bin_path, symfile_name, Config.SYMFILES_DIR)
     with open(symfile_path, 'r') as f:
         _, platform, _, id, product = f.readline().split()
     with open(symfile_path, 'rb') as f:
@@ -54,3 +55,5 @@ def send_symfile(path, name, address, version):
         data = {'version': version, 'platform': platform}
         r = requests.post("{}/data/symfiles/{}/{}".format(address, product, id), data=data, files=files)
     return r
+
+
