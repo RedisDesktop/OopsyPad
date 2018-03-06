@@ -8,6 +8,7 @@ OopsyPad is a Breakpad minidumps processing tool for [RedisDesktopManager](https
 - `Python 3`
 - `MongoDB`
 - `build-essential libcurl4-gnutls-dev pkg-config` for building breakpad deps
+- `redis-server` (Celery backend)
 
 ## Installation
 ```shell
