@@ -7,6 +7,7 @@ OopsyPad is a Breakpad minidumps processing tool for [RedisDesktopManager](https
 ## Requirements
 - `Python 3`
 - `MongoDB`
+- `build-essential libcurl4-gnutls-dev pkg-config` for building breakpad deps
 
 ## Installation
 ```shell
