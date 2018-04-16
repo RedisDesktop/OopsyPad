@@ -3,10 +3,10 @@ import sys
 
 assert sys.version_info >= (3,), 'Python 3 is required'
 
-VERSION = '0.1.1-alpha'
+VERSION = '0.2.1-alpha'
 
 setup(
-    name="oopsypad",
+    name='oopsypad',
     version=VERSION,
     description='Breakpad minidump processing tool.',
     license='GPLv3',
@@ -14,6 +14,8 @@ setup(
         'flask',
         'flask-admin',
         'flask-mongoengine',
+        'flask-httpauth',
+        'flask-security',
         'redis',
         'celery',
         'python-dateutil',
