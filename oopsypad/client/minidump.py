@@ -4,12 +4,12 @@ import requests
 from oopsypad.client.base import oopsy, get_address
 
 
-@oopsy.command(name='oopsy_send_minidump')
+@oopsy.command(name='oopsy_crash_report')
 @click.argument('dump-path')
 @click.argument('product')
 @click.argument('version')
 @click.argument('platform')
-def oopsy_send_minidump(dump_path, product, version, platform):
+def oopsy_crash_report(dump_path, product, version, platform):
     """
     \b
     DUMP-PATH

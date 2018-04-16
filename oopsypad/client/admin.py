@@ -45,10 +45,10 @@ def project():
 @click.pass_context
 def add_project(ctx, project_name, min_version, platforms):
     headers = {'Authorization': get_token()}
-    data = {'min_version': min_version, 'allowed_platforms': platforms}
+    project_data = {'min_version': min_version, 'allowed_platforms': platforms}
     response = requests.post(
         '{}/api/project/{}'.format(ctx.obj['ADDRESS'], project_name),
-        data=data, headers=headers)
+        json=project_data, headers=headers)
     if response.status_code == 201:
         click.echo(response.json().get('ok', 'OK'))
     else:
