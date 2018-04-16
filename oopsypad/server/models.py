@@ -1,13 +1,17 @@
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from flask import current_app
-from flask_mongoengine import BaseQuerySet
+import hashlib
+import hmac
 import json
+import os
+import subprocess
+
+from flask import current_app
+from flask_mongoengine import MongoEngine, BaseQuerySet
+from flask_security import UserMixin, RoleMixin
 import mongoengine as mongo
 from mongoengine import fields
 from mongoengine.queryset.visitor import Q
-import os
-import subprocess
 from werkzeug.utils import secure_filename
 
 from oopsypad.server.config import Config
@@ -15,43 +19,87 @@ from oopsypad.server.helpers import last_12_months
 
 DUMPS_DIR = Config.DUMPS_DIR
 SYMFILES_DIR = Config.SYMFILES_DIR
-MINIDUMP_STACKWALK = os.path.join(Config.ROOT_DIR, '3rdparty/breakpad/src/processor/minidump_stackwalk')
-STACKWALKER = os.path.join(Config.ROOT_DIR, '3rdparty/minidump-stackwalk/stackwalker')
+MINIDUMP_STACKWALK = os.path.join(
+    Config.ROOT_DIR, '3rdparty/breakpad/src/processor/minidump_stackwalk')
+STACKWALKER = os.path.join(
+    Config.ROOT_DIR, '3rdparty/minidump-stackwalk/stackwalker')
+
+db = MongoEngine()
+
+
+class Role(mongo.Document, RoleMixin):
+    name = mongo.StringField(max_length=80, unique=True)
+
+    description = mongo.StringField(max_length=255)
+
+
+class User(mongo.Document, UserMixin):
+    email = mongo.StringField(unique=True, required=True)
+
+    password = mongo.StringField(required=True)
+
+    active = mongo.BooleanField(default=False)
+
+    confirmed_at = mongo.DateTimeField()
+
+    roles = mongo.ListField(mongo.ReferenceField(Role), default=['admin'])
+
+    auth_token = mongo.StringField()
+
+    def save(self, *args, **kwargs):
+        if not self.auth_token:
+            with current_app.app_context():
+                self.auth_token = hmac.new(
+                    current_app.config['SECRET_KEY'].encode('utf8'),
+                    str(self.id).encode('utf8'),
+                    hashlib.sha512
+                ).hexdigest()
+
+        return super().save(**kwargs)
 
 
 class Minidump(mongo.Document):
     product = fields.StringField()  # Crashed application name
+
     version = fields.StringField()  # Crashed application version
+
     platform = fields.StringField()  # OS name
+
     filename = fields.StringField()
-    minidump = fields.FileField()  # Google Breakpad minidump (upload_file_minidump)
+
+    minidump = fields.FileField()  # Google Breakpad minidump
+
     stacktrace = fields.StringField()
+
     stacktrace_json = fields.DictField()
+
     date_created = fields.DateTimeField()
+
     crash_reason = fields.StringField()
+
     crash_address = fields.StringField()
+
     crash_thread = fields.IntField()
+
     meta = {'ordering': ['-date_created'],
             'queryset_class': BaseQuerySet}
 
-    def save_minidump(self, request):
+    def save_minidump_file(self, minidump_file):
         if not os.path.isdir(DUMPS_DIR):
             os.makedirs(DUMPS_DIR)
         try:
-            file = request.files['upload_file_minidump']
-            self.filename = secure_filename(file.filename)
+            self.filename = secure_filename(minidump_file.filename)
             target_path = self.get_minidump_path()
-            file.save(target_path)
+            minidump_file.save(target_path)
             with open(target_path, 'rb') as minidump:
                 if self.minidump:
                     self.minidump.replace(minidump)
                 else:
                     self.minidump.put(minidump)
             self.save()
-        except (KeyError, AttributeError) as e:
-            current_app.logger.exception(e)
         except Exception as e:
-            current_app.logger.exception(e)
+            current_app.logger.exception(
+                'Cannot save minidump file: {}'.format(e))
 
     def get_minidump_path(self):
         return os.path.join(DUMPS_DIR, self.filename)
@@ -59,32 +107,40 @@ class Minidump(mongo.Document):
     def get_stacktrace(self):
         minidump_path = self.get_minidump_path()
         try:
-            minidump_stackwalk_output = subprocess.check_output([MINIDUMP_STACKWALK, minidump_path, SYMFILES_DIR],
-                                                                stderr=subprocess.DEVNULL)
+            minidump_stackwalk_output = subprocess.check_output(
+                [MINIDUMP_STACKWALK, minidump_path, SYMFILES_DIR],
+                stderr=subprocess.DEVNULL)
             self.stacktrace = minidump_stackwalk_output.decode()
             self.save()
         except subprocess.CalledProcessError as e:
-            current_app.logger.exception(e)
+            current_app.logger.exception(
+                'Cannot get stacktrace: {}'.format(e))
 
     def parse_stacktrace(self):
         minidump_path = self.get_minidump_path()
         try:
-            stackwalker_output = subprocess.check_output([STACKWALKER, '--pretty', minidump_path, SYMFILES_DIR],
-                                                         stderr=subprocess.DEVNULL)
+            stackwalker_output = subprocess.check_output(
+                [STACKWALKER, '--pretty', minidump_path, SYMFILES_DIR],
+                stderr=subprocess.DEVNULL)
+
             self.stacktrace_json = json.loads(stackwalker_output.decode())
-            crash_info = self.stacktrace_json['crash_info']
-            self.crash_reason = crash_info['type']
-            self.crash_address = crash_info['address']
-            self.crash_thread = crash_info['crashing_thread']
+            crash_info = self.stacktrace_json.get('crash_info')
+            if not crash_info:
+                current_app.logger.info(
+                    'Cannot parse stacktrace: No crash info provided.')
+                return
+            self.crash_reason = crash_info.get('type')
+            self.crash_address = crash_info.get('address')
+            self.crash_thread = crash_info.get('crashing_thread')
             self.save()
+
             Issue.create_or_update_issue(product=self.product,
                                          version=self.version,
                                          platform=self.platform,
                                          reason=self.crash_reason)
-        except (KeyError, AttributeError) as e:
-            current_app.logger.exception(e)
         except subprocess.CalledProcessError as e:
-            current_app.logger.exception(e)
+            current_app.logger.exception(
+                'Cannot parse stacktrace: {}'.format(e))
 
     def create_stacktrace(self):
         from oopsypad.server.worker import process_minidump
@@ -95,17 +151,16 @@ class Minidump(mongo.Document):
 
     @classmethod
     def get_by_id(cls, minidump_id):
-        return cls.objects.get(id=minidump_id)
+        return cls.objects(id=minidump_id).first()
 
     @classmethod
-    def create_minidump(cls, request):
-        data = request.form
-        minidump = cls(product=data['product'],
-                       version=data['version'],
-                       platform=data['platform'],
+    def create_minidump(cls, product, version, platform, minidump_file):
+        minidump = cls(product=product,
+                       version=version,
+                       platform=platform,
                        date_created=datetime.now())
 
-        minidump.save_minidump(request)
+        minidump.save_minidump_file(minidump_file)
         minidump.create_stacktrace()
         return minidump
 
@@ -117,13 +172,15 @@ class Minidump(mongo.Document):
             months_ago = today - relativedelta(months=months)
             one_more_months_ago = today - relativedelta(months=months - 1)
             months_ago_minidumps_count = queryset.filter(
-                Q(date_created__lte=one_more_months_ago) & Q(date_created__gte=months_ago)).count()
+                Q(date_created__lte=one_more_months_ago)
+                & Q(date_created__gte=months_ago)).count()
             counts.append(months_ago_minidumps_count)
         return counts
 
     @classmethod
     def get_versions_per_product(cls, product):
-        return sorted(list(set([i.version for i in cls.objects(product=product)])))
+        return sorted(list(set([i.version
+                                for i in cls.objects(product=product)])))
 
     @classmethod
     def get_last_n_project_minidumps(cls, n, project_name):
@@ -131,62 +188,66 @@ class Minidump(mongo.Document):
         return project_minidumps[:n]
 
     def __str__(self):
-        return "<Minidump: {} {} {} {}>".format(self.product,
-                                                self.version,
-                                                self.platform,
-                                                self.filename)
+        return 'Minidump: {} {} {} {}'.format(self.product,
+                                              self.version,
+                                              self.platform,
+                                              self.filename)
 
 
 class Symfile(mongo.Document):
     product = fields.StringField()
+
     version = fields.StringField()
+
     platform = fields.StringField()
+
     symfile_name = fields.StringField()
+
     symfile_id = fields.StringField()
+
     symfile = fields.FileField()
+
     date_created = fields.DateTimeField()
 
-    def save_symfile(self, request):
+    def save_symfile(self, symfile):
         try:
-            file = request.files['symfile']
-            self.symfile_name = secure_filename(file.filename)
+            self.symfile_name = secure_filename(symfile.filename)
             target_path = self.get_symfile_path()
             if not os.path.isdir(target_path):
                 os.makedirs(target_path)
-            file.save(os.path.join(target_path, self.symfile_name))
+            symfile.save(os.path.join(target_path, self.symfile_name))
             self.save()
-        except (KeyError, AttributeError) as e:
-            current_app.logger.exception(e)
         except Exception as e:
-            current_app.logger.exception(e)
+            current_app.logger.exception(
+                'Cannot save symfile: {}'.format(e))
 
     def get_symfile_path(self):
         return os.path.join(SYMFILES_DIR, self.product, self.symfile_id)
 
     @classmethod
-    def create_symfile(cls, request, product, id):
-        data = request.form
-        try:
-            symfile = cls.objects.get(symfile_id=id)
-        except mongo.DoesNotExist:
+    def create_symfile(cls, product, version, platform, symfile_id, file):
+        symfile = cls.objects(symfile_id=symfile_id).first()
+        if not symfile:
             symfile = cls(product=product,
-                          symfile_id=id,
-                          version=data['version'],
-                          platform=data['platform'],
+                          symfile_id=symfile_id,
+                          version=version,
+                          platform=platform,
                           date_created=datetime.now())
-            symfile.save_symfile(request)
+            symfile.save_symfile(file)
         return symfile
 
     def __str__(self):
-        return "<Symfile: {} {} {} {}>".format(self.product,
-                                               self.version,
-                                               self.platform,
-                                               self.symfile_id)
+        return 'Symfile: {} {} {} {}'.format(self.product,
+                                             self.version,
+                                             self.platform,
+                                             self.symfile_id)
 
 
 class Project(mongo.Document):
     name = fields.StringField(required=True, unique=True)
+
     min_version = fields.StringField()
+
     allowed_platforms = fields.ListField(fields.ReferenceField('Platform'))
 
     def get_allowed_platforms(self):
@@ -203,18 +264,25 @@ class Project(mongo.Document):
 
     @classmethod
     def create_project(cls, name):
-        try:
-            project = cls.objects.get(name=name)
-        except mongo.DoesNotExist:
+        project = cls.objects(name=name).first()
+        if not project:
             project = cls(name=name)
             project.save()
         return project
 
+    def get_project_dict(self):
+        return {'name': self.name,
+                'min_version': self.min_version,
+                'allowed_platforms': [p.name for p in self.allowed_platforms]}
+
     def __str__(self):
-        return "<Project: {} {} {}>".format(self.name,
-                                            self.min_version if self.min_version else '~no min version',
-                                            self.allowed_platforms if self.allowed_platforms
-                                            else '~no allowed platforms')
+        return 'Name: {} \n' \
+               'Minimum allowed version: {}\n' \
+               'Allowed Platforms: {}'.format(
+                self.name,
+                self.min_version if self.min_version else '~no min version',
+                ', '.join([p.name for p in self.allowed_platforms])
+                if self.allowed_platforms else '~no allowed platforms')
 
 
 class Platform(mongo.Document):
@@ -222,9 +290,8 @@ class Platform(mongo.Document):
 
     @classmethod
     def create_platform(cls, name):
-        try:
-            platform = Platform.objects.get(name=name)
-        except mongo.DoesNotExist:
+        platform = Platform.objects(name=name).first()
+        if not platform:
             platform = cls(name=name)
             platform.save()
         return platform
@@ -238,21 +305,23 @@ class Platform(mongo.Document):
 
 class Issue(mongo.Document):
     product = fields.StringField()
+
     version = fields.StringField()
+
     platform = fields.StringField()
+
     reason = fields.StringField()
+
     total = fields.IntField(default=1)
+
     meta = {'ordering': ['-total']}
 
     @classmethod
     def create_or_update_issue(cls, product, version, platform, reason):
-        try:
-            issue = cls.objects.get(product=product,
-                                    version=version,
-                                    platform=platform,
-                                    reason=reason)
-        except mongo.DoesNotExist:
-            issue = None
+        issue = cls.objects(product=product,
+                            version=version,
+                            platform=platform,
+                            reason=reason).first()
         if issue:
             issue.total += 1
         else:
@@ -268,8 +337,8 @@ class Issue(mongo.Document):
         return cls.objects(product=project_name)[:n]
 
     def __str__(self):
-        return "<Issue: {} {} {} {} {}>".format(self.product,
-                                                self.version,
-                                                self.platform,
-                                                self.reason,
-                                                self.total)
+        return 'Issue: {} {} {} {} {}'.format(self.product,
+                                              self.version,
+                                              self.platform,
+                                              self.reason,
+                                              self.total)
