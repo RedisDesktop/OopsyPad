@@ -1,6 +1,10 @@
 3rdparty/*
 .oopsy/
 .idea/
+dumps/
+symbols/
+.pytest_cache/
+oopsypad/server/config_local.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
