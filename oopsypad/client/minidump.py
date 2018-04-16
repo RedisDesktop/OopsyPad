@@ -21,13 +21,18 @@ def oopsy_send_minidump(dump_path, product, version, platform):
     PLATFORM
         Platform that the product is running on (Linux, MacOS, Windows).
     """
-    response = send_minidump(get_address(), dump_path, product, version, platform)
-    print(response.text)
+    response = send_crash_report(
+        get_address(), dump_path, product, version, platform)
+    if response.status_code == 201:
+        click.echo(response.json().get('ok', 'OK'))
+    else:
+        click.echo(response.json().get('error', 'ERROR'))
 
 
-def send_minidump(address, dump_path, product, version, platform):
+def send_crash_report(address, dump_path, product, version, platform):
     with open(dump_path, 'rb') as f:
         data = {'product': product, 'version': version, 'platform': platform}
         files = {'upload_file_minidump': f}
-        r = requests.post("{}/crash-report".format(address), data=data, files=files)
-    return r
+        response = requests.post(
+            '{}/crash-report'.format(address), data=data, files=files)
+    return response

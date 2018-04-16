@@ -1,10 +1,11 @@
-import click
 import os
-import requests
 import shutil
 import subprocess
 
-from oopsypad.client.base import oopsy, get_address
+import click
+import requests
+
+from oopsypad.client.base import oopsy, get_address, get_token
 from oopsypad.server.config import Config
 
 DUMP_SYMS_PATH = '3rdparty/breakpad/src/tools/linux/dump_syms/dump_syms'
@@ -12,7 +13,8 @@ DUMP_SYMS = os.path.join(Config.ROOT_DIR, DUMP_SYMS_PATH)
 
 
 def create_symfile(bin_path, symfile_name, symfile_root):
-    dump_syms_output = subprocess.check_output([DUMP_SYMS, bin_path], stderr=subprocess.DEVNULL)
+    dump_syms_output = subprocess.check_output(
+        [DUMP_SYMS, bin_path], stderr=subprocess.DEVNULL)
     with open(symfile_name, 'wb') as f:
         f.write(dump_syms_output)
 
@@ -43,7 +45,10 @@ def oopsy_send_symfile(bin_path, symfile_name, version):
         Product version.
     """
     response = send_symfile(bin_path, symfile_name, get_address(), version)
-    print(response.text)
+    if response.status_code == 201:
+        click.echo(response.json().get('ok', 'OK'))
+    else:
+        click.echo(response.json().get('error', 'ERROR'))
 
 
 def send_symfile(bin_path, symfile_name, address, version):
@@ -51,9 +56,10 @@ def send_symfile(bin_path, symfile_name, address, version):
     with open(symfile_path, 'r') as f:
         _, platform, _, id, product = f.readline().split()
     with open(symfile_path, 'rb') as f:
-        files = {'symfile': f}
+        headers = {'Authorization': get_token()}
         data = {'version': version, 'platform': platform}
-        r = requests.post("{}/data/symfiles/{}/{}".format(address, product, id), data=data, files=files)
+        files = {'symfile': f}
+        r = requests.post(
+            '{}/api/data/symfile/{}/{}'.format(address, product, id),
+            data=data, headers=headers, files=files)
     return r
-
-
