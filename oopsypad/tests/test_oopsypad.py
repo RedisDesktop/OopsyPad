@@ -48,10 +48,23 @@ class TestBase(LiveServerTestCase):
         if element_xpath:
             self.browser.find_element_by_xpath(element_xpath).click()
 
+    def type_text(self, text, element_id=None, element_xpath=None):
+        if element_id:
+            self.browser.find_element_by_id(element_id).send_keys(text)
+        if element_xpath:
+            self.browser.find_element_by_xpath(element_xpath).send_keys(text)
+
 
 class OopsyPadTest(TestBase):
 
     def test_issue_is_accessable_via_webui(self):
+        # Login
+        login_url = self.get_server_url() + url_for('security.login')
+        self.browser.get(login_url)
+        self.type_text('test@test.com', element_id='email')
+        self.type_text('test', element_id='password')
+        self.click_element(element_id='submit')
+
         # Get project overview page
         projects_url = self.get_server_url() + url_for('project.index_view')
         self.browser.get(projects_url)
