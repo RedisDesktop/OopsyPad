@@ -1,19 +1,22 @@
 import calendar
 from datetime import datetime
-from dateutil.relativedelta import relativedelta
-from flask import jsonify, request
-from flask_admin import Admin, AdminIndexView, expose
-from flask_admin.contrib.mongoengine import ModelView
-from flask_admin.model.template import macro
 import random
 import warnings
+
+from dateutil.relativedelta import relativedelta
+from flask import jsonify, request, redirect, flash
+from flask_admin import Admin, AdminIndexView, expose
+from flask_admin.base import MenuLink
+from flask_admin.contrib.mongoengine import ModelView
+from flask_admin.model.template import macro
+from flask_security import current_user
 
 from oopsypad.server.helpers import last_12_months
 from oopsypad.server import models
 
 
 def get_random_color():
-    return "#%06x" % random.randint(0, 0xFFFFFF)
+    return '#%06x' % random.randint(0, 0xFFFFFF)
 
 
 def get_decorated_data(labels, data, data_labels=None):
@@ -25,7 +28,7 @@ def get_decorated_data(labels, data, data_labels=None):
             'fillColor': clr,
             'strokeColor': clr,
             'highlightFill': clr,
-            'highlightStroke': "rgba(220,220,220,1)",
+            'highlightStroke': 'rgba(220,220,220,1)',
             'data': d
         }
         if data_labels:
@@ -38,8 +41,19 @@ def get_decorated_data(labels, data, data_labels=None):
 
 def get_last_12_months_labels():
     today = datetime.today()
-    labels = [(today - relativedelta(months=months)).month for months in last_12_months()]
+    labels = [(today - relativedelta(months=months)).month
+              for months in last_12_months()]
     return [calendar.month_name[m] for m in labels]
+
+
+class AuthenticatedMenuLink(MenuLink):
+    def is_accessible(self):
+        return current_user.is_authenticated
+
+
+class NotAuthenticatedMenuLink(MenuLink):
+    def is_accessible(self):
+        return not current_user.is_authenticated
 
 
 class CustomAdminView(AdminIndexView):
@@ -48,7 +62,16 @@ class CustomAdminView(AdminIndexView):
         return self.render('admin/index.html')
 
 
-class ProjectView(ModelView):
+class CustomModelView(ModelView):
+    def is_accessible(self):
+        return current_user.has_role('admin')
+
+    def inaccessible_callback(self, name, **kwargs):
+        flash('Access denied for non-admins.', 'warning')
+        return redirect('/')
+
+
+class ProjectView(CustomModelView):
     action_disallowed_list = ['delete']
     can_view_details = True
     column_display_actions = False
@@ -70,9 +93,12 @@ class ProjectView(ModelView):
     @expose('/details/')
     def details_view(self):
         project = models.Project.objects.get(id=request.args.get('id'))
-        minidump_versions = models.Minidump.get_versions_per_product(product=project.name)
-        last_10_minidumps = models.Minidump.get_last_n_project_minidumps(n=10, project_name=project.name)
-        issues = models.Issue.get_top_n_project_issues(n=10, project_name=project.name)
+        minidump_versions = models.Minidump.get_versions_per_product(
+            product=project.name)
+        last_10_minidumps = models.Minidump.get_last_n_project_minidumps(
+            n=10, project_name=project.name)
+        issues = models.Issue.get_top_n_project_issues(
+            n=10, project_name=project.name)
         return self.render('admin/project_overview.html',
                            project=project,
                            versions=minidump_versions,
@@ -86,13 +112,16 @@ class ProjectView(ModelView):
         project = models.Project.objects.get(id=request.args.get('id'))
         platforms = project.get_allowed_platforms()
         if version and 'All' not in version:
-            project_minidumps = models.Minidump.objects(product=project.name, version=version)
+            project_minidumps = models.Minidump.objects(product=project.name,
+                                                        version=version)
         else:
             project_minidumps = models.Minidump.objects(product=project.name)
         data = {}
         for platform in platforms:
             platform_minidumps = project_minidumps(platform=platform)
-            data[platform] = models.Minidump.get_last_12_months_minidumps_counts(platform_minidumps)
+            data[platform] = \
+                models.Minidump.get_last_12_months_minidumps_counts(
+                    platform_minidumps)
 
         labels = get_last_12_months_labels()
         return jsonify(
@@ -102,17 +131,19 @@ class ProjectView(ModelView):
                                       ))
 
 
-class CrashReportView(ModelView):
+class CrashReportView(CustomModelView):
     can_create = False
     can_edit = False
     can_delete = False
     column_display_actions = False
-    column_list = ('product', 'version', 'platform', 'date_created', 'crash_reason')
-    column_filters = ('product', 'version', 'platform', 'date_created', 'crash_reason')
+    column_list = ('product', 'version', 'platform', 'date_created',
+                   'crash_reason')
+    column_filters = ('product', 'version', 'platform', 'date_created',
+                      'crash_reason')
     list_template = 'admin/crash_report_list.html'
 
 
-class IssueView(ModelView):
+class IssueView(CustomModelView):
     can_create = False
     can_edit = False
     can_delete = False
@@ -140,7 +171,8 @@ class IssueView(ModelView):
         return self.render('admin/issue_details.html',
                            issue=issue,
                            column_details_list=self.column_details_list,
-                           minidumps=minidumps.paginate(page=page_num, per_page=per_page),
+                           minidumps=minidumps.paginate(page=page_num,
+                                                        per_page=per_page),
                            per_page=per_page)
 
 
@@ -149,12 +181,19 @@ admin = Admin(
     template_mode='bootstrap3',
     index_view=CustomAdminView(
         template='index.html',
-        url="/")
+        url='/')
 )
 
+
+admin.add_link(AuthenticatedMenuLink(name='Logout', url='/logout'))
+admin.add_link(NotAuthenticatedMenuLink(name='Login', url='/login'))
+
 with warnings.catch_warnings():
-    warnings.filterwarnings('ignore', 'Fields missing from ruleset', UserWarning)
+    warnings.filterwarnings(action='ignore',
+                            message='Fields missing from ruleset',
+                            category=UserWarning)
     admin.add_view(ProjectView(models.Project, name='Projects'))
-    admin.add_view(ModelView(models.Platform, name='Platforms'))
-    admin.add_view(CrashReportView(models.Minidump, name='Crash Reports', endpoint='crash-reports'))
+    admin.add_view(CustomModelView(models.Platform, name='Platforms'))
+    admin.add_view(CrashReportView(
+        models.Minidump, name='Crash Reports', endpoint='crash-reports'))
     admin.add_view(IssueView(models.Issue, name='Issues'))
