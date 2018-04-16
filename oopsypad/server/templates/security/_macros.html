@@ -1,0 +1,21 @@
+{% macro render_field_with_errors(field) %}
+<div class="form-group row">
+    <div class="col-2 col-form-label">{{ field.label }}</div>
+    {% if field.type != 'BooleanField' %}
+        <div class="col-10">{{ field(class='form-control', **kwargs) | safe }}</div>
+    {% else %}
+        <div class="col-10">{{ field(**kwargs) | safe }}</div>
+    {% endif %}
+    {% if field.errors %}
+    <ul>
+        {% for error in field.errors %}
+        <li>{{ error }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{% macro render_field(field) %}
+<p>{{ field(**kwargs) | safe }}</p>
+{% endmacro %}
