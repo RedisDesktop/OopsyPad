@@ -15,7 +15,7 @@ def get_auth_token():
 
 
 @public_bp.route('/crash-report', methods=['POST'])
-def add_minidump():
+def crash_report():
     data = request.form
 
     product = data.get('product')
@@ -78,11 +78,11 @@ def add_project(name):
     try:
         project = models.Project.create_project(name=name)
 
-        min_version = request.form.get('min_version', None)
+        min_version = request.json.get('min_version')
         if min_version:
             project.update_min_version(min_version)
 
-        allowed_platforms = request.form.getlist('allowed_platforms', None)
+        allowed_platforms = request.json.get('allowed_platforms')
         if allowed_platforms:
             for p in allowed_platforms:
                 platform = models.Platform.create_platform(p)

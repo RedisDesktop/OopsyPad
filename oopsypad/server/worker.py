@@ -1,14 +1,13 @@
 from celery import Celery
 from celery.utils.log import get_task_logger
 
-import flask_mongoengine as mongo
-
 from oopsypad.server import models
 from oopsypad.server.run import app
 
 
 def make_celery(app):
-    celery = Celery(app.import_name, backend=app.config['CELERY_RESULT_BACKEND'],
+    celery = Celery(app.import_name,
+                    backend=app.config['CELERY_RESULT_BACKEND'],
                     broker=app.config['CELERY_BROKER_URL'])
     celery.conf.update(app.config)
     TaskBase = celery.Task
@@ -31,11 +30,12 @@ logger = get_task_logger(__name__)
 
 @celery.task
 def process_minidump(minidump_id):
-    logger.warning("Processing minidump {}...".format(minidump_id))
-    try:
-        minidump = models.Minidump.get_by_id(minidump_id)
-        minidump.get_stacktrace()
-        minidump.parse_stacktrace()
-        logger.info("Minidump {} processed.".format(minidump_id))
-    except mongo.DoesNotExist:
-        logger.warning("Minidump {} was not found.".format(minidump_id))
+    logger.warning('Processing minidump {}...'.format(minidump_id))
+
+    minidump = models.Minidump.get_by_id(minidump_id)
+    if not minidump:
+        logger.warning('Minidump {} was not found.'.format(minidump_id))
+        return
+    minidump.get_stacktrace()
+    minidump.parse_stacktrace()
+    logger.info('Minidump {} was processed.'.format(minidump_id))

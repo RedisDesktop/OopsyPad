@@ -243,12 +243,30 @@ class Symfile(mongo.Document):
                                              self.symfile_id)
 
 
+class Platform(mongo.Document):
+    name = fields.StringField(required=True, unique=True)
+
+    @classmethod
+    def create_platform(cls, name):
+        platform = Platform.objects(name=name).first()
+        if not platform:
+            platform = cls(name=name)
+            platform.save()
+        return platform
+
+    def __str__(self):
+        return self.name
+
+    def __repr__(self):
+        return self.name
+
+
 class Project(mongo.Document):
     name = fields.StringField(required=True, unique=True)
 
     min_version = fields.StringField()
 
-    allowed_platforms = fields.ListField(fields.ReferenceField('Platform'))
+    allowed_platforms = fields.ListField(fields.ReferenceField(Platform))
 
     def get_allowed_platforms(self):
         return [i.name for i in self.allowed_platforms]
@@ -283,24 +301,6 @@ class Project(mongo.Document):
                 self.min_version if self.min_version else '~no min version',
                 ', '.join([p.name for p in self.allowed_platforms])
                 if self.allowed_platforms else '~no allowed platforms')
-
-
-class Platform(mongo.Document):
-    name = fields.StringField(required=True, unique=True)
-
-    @classmethod
-    def create_platform(cls, name):
-        platform = Platform.objects(name=name).first()
-        if not platform:
-            platform = cls(name=name)
-            platform.save()
-        return platform
-
-    def __str__(self):
-        return self.name
-
-    def __repr__(self):
-        return self.name
 
 
 class Issue(mongo.Document):

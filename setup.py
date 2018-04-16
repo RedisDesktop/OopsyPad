@@ -34,7 +34,7 @@ setup(
         'console_scripts':
             ['oopsy_run_server = oopsypad.server.run:oopsy_run_server',
              'oopsy_send_symfile = oopsypad.client.symfile:oopsy_send_symfile',
-             'oopsy_send_minidump = oopsypad.client.minidump:oopsy_send_minidump',
+             'oopsy_crash_report = oopsypad.client.minidump:oopsy_crash_report',
              'oopsy_admin = oopsypad.client.admin:oopsy_admin']
     }
 )
