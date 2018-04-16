@@ -10,3 +10,10 @@
     <h3>Projects {{ lib.add_modal_button(url=get_url('.create_view', url=return_url, modal=True),
     content=_gettext('Add Project'), btn_class='btn btn-default') }}</h3>
 {% endblock %}
+
+{% block tail_js %}
+        {{ super() }}
+    <script>
+        $('table').removeClass('model-list');
+    </script>
+{% endblock %}
