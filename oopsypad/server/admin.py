@@ -62,16 +62,22 @@ class CustomAdminView(AdminIndexView):
         return self.render('admin/index.html')
 
 
-class CustomModelView(ModelView):
+class AdminModelView(ModelView):
     def is_accessible(self):
         return current_user.has_role('admin')
 
     def inaccessible_callback(self, name, **kwargs):
-        flash('Access denied for non-admins.', 'warning')
+        flash('Access denied.', 'warning')
         return redirect('/')
 
 
-class ProjectView(CustomModelView):
+class DeveloperModelView(ModelView):
+    def is_accessible(self):
+        return (current_user.has_role('admin') or
+                current_user.has_role('developer'))
+
+
+class ProjectView(AdminModelView):
     action_disallowed_list = ['delete']
     can_view_details = True
     column_display_actions = False
@@ -131,7 +137,7 @@ class ProjectView(CustomModelView):
                                       ))
 
 
-class CrashReportView(CustomModelView):
+class CrashReportView(DeveloperModelView):
     can_create = False
     can_edit = False
     can_delete = False
@@ -143,7 +149,7 @@ class CrashReportView(CustomModelView):
     list_template = 'admin/crash_report_list.html'
 
 
-class IssueView(CustomModelView):
+class IssueView(DeveloperModelView):
     can_create = False
     can_edit = False
     can_delete = False
@@ -193,7 +199,7 @@ with warnings.catch_warnings():
                             message='Fields missing from ruleset',
                             category=UserWarning)
     admin.add_view(ProjectView(models.Project, name='Projects'))
-    admin.add_view(CustomModelView(models.Platform, name='Platforms'))
+    admin.add_view(AdminModelView(models.Platform, name='Platforms'))
     admin.add_view(CrashReportView(
         models.Minidump, name='Crash Reports', endpoint='crash-reports'))
     admin.add_view(IssueView(models.Issue, name='Issues'))
