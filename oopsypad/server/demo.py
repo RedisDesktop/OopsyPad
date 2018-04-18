@@ -5,33 +5,40 @@ from flask_security.utils import hash_password
 from oopsypad.server import security
 
 ADMIN_TOKEN = 'admin_token'
+ADMIN_EMAIL = 'admin@test.com'
+
 DEV_TOKEN = 'dev_token'
+DEV_EMAIL = 'dev@test.com'
+
 SYM_TOKEN = 'sym_token'
+SYM_EMAIL = 'sym@test.com'
+
+PSW = 'test'
 
 
 def create_test_users():
     try:
-        if not security.user_datastore.find_user(email='admin@test.com'):
+        if not security.user_datastore.find_user(email=ADMIN_EMAIL):
             security.user_datastore.create_user(
-                email='admin@test.com',
-                password=hash_password('test'),
-                auth_token='admin_token',
+                email=ADMIN_EMAIL,
+                password=hash_password(PSW),
+                auth_token=ADMIN_TOKEN,
                 confirmed_at=datetime.datetime.now(),
                 roles=['admin']
             )
-        if not security.user_datastore.find_user(email='dev@test.com'):
+        if not security.user_datastore.find_user(email=DEV_EMAIL):
             security.user_datastore.create_user(
-                email='dev@test.com',
-                password=hash_password('test'),
-                auth_token='dev_token',
+                email=DEV_EMAIL,
+                password=hash_password(PSW),
+                auth_token=DEV_TOKEN,
                 confirmed_at=datetime.datetime.now(),
                 roles=['developer']
             )
-        if not security.user_datastore.find_user(email='sym@test.com'):
+        if not security.user_datastore.find_user(email=SYM_EMAIL):
             security.user_datastore.create_user(
-                email='sym@test.com',
-                password=hash_password('test'),
-                auth_token='sym_token',
+                email=SYM_EMAIL,
+                password=hash_password(PSW),
+                auth_token=SYM_TOKEN,
                 confirmed_at=datetime.datetime.now(),
                 roles=['sym_uploader']
             )
