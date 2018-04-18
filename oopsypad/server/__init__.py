@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request
-from flask_security import current_user, login_required, http_auth_required
+from flask_security import (current_user, login_required, http_auth_required,
+                            roles_accepted)
 
 from oopsypad.server import models
 
@@ -55,6 +56,7 @@ def crash_report():
 
 @api_bp.route('/data/symfile/<product>/<id>', methods=['POST'])
 @login_required
+@roles_accepted('admin', 'sym_uploader')
 def add_symfile(product, id):
     data = request.form
     version = data.get('version')
@@ -72,8 +74,9 @@ def add_symfile(product, id):
         return jsonify(error='Something went wrong: {}'.format(e)), 400
 
 
-@api_bp.route('/project/<name>', methods=['POST'])
+@api_bp.route('/projects/<name>', methods=['POST'])
 @login_required
+@roles_accepted('admin')
 def add_project(name):
     try:
         project = models.Project.create_project(name=name)
@@ -93,8 +96,9 @@ def add_project(name):
         return jsonify(error='Something went wrong: {}'.format(e)), 400
 
 
-@api_bp.route('/project/<name>/delete', methods=['DELETE'])
+@api_bp.route('/projects/<name>/delete', methods=['DELETE'])
 @login_required
+@roles_accepted('admin')
 def delete_project(name):
     try:
         models.Project.objects.get(name=name).delete()
@@ -103,8 +107,9 @@ def delete_project(name):
         return jsonify(error='Something went wrong: {}'.format(e)), 400
 
 
-@api_bp.route('/project/all')
+@api_bp.route('/projects')
 @login_required
+@roles_accepted('admin')
 def list_projects():
     try:
         projects = [models.Project.get_project_dict(p)

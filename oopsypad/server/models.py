@@ -42,7 +42,7 @@ class User(mongo.Document, UserMixin):
 
     confirmed_at = mongo.DateTimeField()
 
-    roles = mongo.ListField(mongo.ReferenceField(Role), default=['admin'])
+    roles = mongo.ListField(mongo.ReferenceField(Role), default=['developer'])
 
     auth_token = mongo.StringField()
 

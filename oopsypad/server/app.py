@@ -5,31 +5,30 @@ import os
 from flask import Flask
 from flask_security import Security
 
-from oopsypad.server import api_bp, public_bp
+from oopsypad.server import api_bp, public_bp, config
 from oopsypad.server.admin import admin
-from oopsypad.server.config import app_config, PROD, TEST
 from oopsypad.server.models import db
 from oopsypad.server.security import user_datastore, load_security_extensions
-from oopsypad.server.demo import create_test_user
+from oopsypad.server.demo import create_test_users
 
 
 def create_app(config_name=None):
     if not config_name:
         env = os.getenv('OOPSY_ENV')
         if env:
-            if env in app_config:
+            if env in config.app_config:
                 config_name = env
             else:
                 print('"{}" env is not supported, running on "{}".'.format(
-                    env, PROD))
-                config_name = PROD
+                    env, config.PROD))
+                config_name = config.PROD
         else:
-            config_name = PROD
+            config_name = config.PROD
 
     app = Flask(__name__)
 
     # Setup config
-    app.config.from_object(app_config[config_name])
+    app.config.from_object(config.app_config[config_name])
     app.config.from_envvar('OOPSYPAD_SETTINGS', silent=True)
     app.config.from_pyfile('config_local.py', silent=True)
 
@@ -52,14 +51,18 @@ def create_app(config_name=None):
     handler.setFormatter(formatter)
     app.logger.addHandler(handler)
 
-    # Create test user
-    if config_name == TEST:
-        with app.app_context():
-            create_test_user()
+    # Create user roles
+    with app.app_context():
+        user_datastore.find_or_create_role(name='admin')
+        user_datastore.find_or_create_role(name='developer')
+        user_datastore.find_or_create_role(name='sym_uploader')
+        # Create test user
+        if config_name in (config.DEV, config.TEST):
+            create_test_users()
 
     return app
 
 
 if __name__ == '__main__':
-    app = create_app(config_name='dev')
+    app = create_app(config_name=config.DEV)
     app.run()
