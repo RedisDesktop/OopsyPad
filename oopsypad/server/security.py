@@ -33,7 +33,7 @@ def load_security_extensions(app):
 
         @current_app.login_manager.unauthorized_handler
         def unauthorized_handler():
-            if request.path.startswith("/api"):
+            if request.path.startswith('/api'):
                 return jsonify(error='Unauthorized'), 401
             else:
                 return redirect(

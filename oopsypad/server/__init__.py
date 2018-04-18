@@ -117,13 +117,3 @@ def list_projects():
         return jsonify(projects=projects), 200
     except Exception as e:
         return jsonify(error='Something went wrong: {}'.format(e)), 400
-
-
-@api_bp.errorhandler(404)
-def not_found(e):
-    return jsonify(error=404, text=str(e)), 404
-
-
-@api_bp.errorhandler(500)
-def server_error(e):
-    return jsonify(error=500, text=str(e)), 500
