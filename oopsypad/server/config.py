@@ -42,6 +42,7 @@ class TestConfig(Config):
     TESTING = True
 
     MONGODB_SETTINGS = {'DB': DB_NAMES[TEST]}
+    LIVESERVER_PORT = 8000
 
 
 class ProdConfig(Config):

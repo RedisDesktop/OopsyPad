@@ -1,3 +1,5 @@
+ddt
 flask-testing
 pytest
+pytest-ordering
 selenium
