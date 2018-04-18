@@ -1,10 +1,7 @@
-import configparser
-
 import click
 import requests
 
-from oopsypad.client.base import (oopsy, get_address, get_token,
-                                  OOPSY_CONFIG_PATH)
+from oopsypad.client.base import oopsy, get_address, get_token, save_token
 
 
 @oopsy.group(name='oopsy_admin')
@@ -21,11 +18,7 @@ def login(ctx, user, password):
     response = requests.get(
         '{}/token'.format(ctx.obj['ADDRESS']), auth=(user, password))
     if response.status_code == 200:
-        config = configparser.ConfigParser()
-        config['oopsypad'] = {}
-        config['oopsypad']['token'] = response.json().get('token')
-        with open(OOPSY_CONFIG_PATH, 'w') as configfile:
-            config.write(configfile)
+        save_token(response.json().get('token'))
         click.echo('Logged in as {}'.format(user))
     else:
         click.echo('Unauthorized')
@@ -47,10 +40,12 @@ def add_project(ctx, project_name, min_version, platforms):
     headers = {'Authorization': get_token()}
     project_data = {'min_version': min_version, 'allowed_platforms': platforms}
     response = requests.post(
-        '{}/api/project/{}'.format(ctx.obj['ADDRESS'], project_name),
+        '{}/api/projects/{}'.format(ctx.obj['ADDRESS'], project_name),
         json=project_data, headers=headers)
     if response.status_code == 201:
         click.echo(response.json().get('ok', 'OK'))
+    elif response.status_code == 403:
+        click.echo(response.reason.capitalize())
     else:
         click.echo(response.json().get('error', 'ERROR'))
 
@@ -61,10 +56,12 @@ def add_project(ctx, project_name, min_version, platforms):
 def delete_project(ctx, project_name):
     headers = {'Authorization': get_token()}
     response = requests.delete(
-        '{}/api/project/{}/delete'.format(ctx.obj['ADDRESS'], project_name),
+        '{}/api/projects/{}/delete'.format(ctx.obj['ADDRESS'], project_name),
         headers=headers)
     if response.status_code == 202:
         click.echo(response.json().get('ok', 'OK'))
+    elif response.status_code == 403:
+        click.echo(response.reason.capitalize())
     else:
         click.echo(response.json().get('error', 'ERROR'))
 
@@ -73,7 +70,7 @@ def delete_project(ctx, project_name):
 @click.pass_context
 def list_projects(ctx):
     headers = {'Authorization': get_token()}
-    response = requests.get('{}/api/project/all'.format(ctx.obj['ADDRESS']),
+    response = requests.get('{}/api/projects'.format(ctx.obj['ADDRESS']),
                             headers=headers)
     if response.status_code == 200:
         projects = response.json().get('projects')
@@ -88,5 +85,7 @@ def list_projects(ctx):
                         ', '.join(p['allowed_platforms'])))
         else:
             click.echo('No projects.')
+    elif response.status_code == 403:
+        click.echo(response.reason.capitalize())
     else:
         click.echo(response.json().get('error', 'ERROR'))
