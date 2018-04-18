@@ -21,6 +21,14 @@ def get_address(ctx=None):
     return address
 
 
+def save_token(token):
+    config = configparser.ConfigParser()
+    config['oopsypad'] = {}
+    config['oopsypad']['token'] = token
+    with open(OOPSY_CONFIG_PATH, 'w') as configfile:
+        config.write(configfile)
+
+
 def get_token():
     config = configparser.ConfigParser()
     config.read(OOPSY_CONFIG_PATH)
