@@ -47,6 +47,8 @@ def oopsy_send_symfile(bin_path, symfile_name, version):
     response = send_symfile(bin_path, symfile_name, get_address(), version)
     if response.status_code == 201:
         click.echo(response.json().get('ok', 'OK'))
+    elif response.status_code == 403:
+        click.echo(response.reason.capitalize())
     else:
         click.echo(response.json().get('error', 'ERROR'))
 
