@@ -4,6 +4,7 @@ import os
 
 from flask import Flask
 from flask_security import Security
+from raven.contrib.flask import Sentry
 
 from oopsypad.server import api_bp, public_bp, config
 from oopsypad.server.admin import admin
@@ -50,6 +51,11 @@ def create_app(config_name=None):
         '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     handler.setFormatter(formatter)
     app.logger.addHandler(handler)
+
+    # Setup Sentry
+    if app.config['ENABLE_SENTRY']:
+        Sentry(app, dsn=app.config['SENTRY_DSN'],
+               logging=True, level=logging.ERROR)
 
     # Create user roles
     with app.app_context():

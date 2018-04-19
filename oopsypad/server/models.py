@@ -126,7 +126,7 @@ class Minidump(mongo.Document):
             self.stacktrace_json = json.loads(stackwalker_output.decode())
             crash_info = self.stacktrace_json.get('crash_info')
             if not crash_info:
-                current_app.logger.info(
+                current_app.logger.error(
                     'Cannot parse stacktrace: No crash info provided.')
                 return
             self.crash_reason = crash_info.get('type')

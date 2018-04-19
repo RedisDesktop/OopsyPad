@@ -21,6 +21,7 @@ setup(
         'python-dateutil',
         'gunicorn',
         'requests',
+        'raven',
     ],
     tests_require=[
         'selenium',
