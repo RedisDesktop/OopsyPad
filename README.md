@@ -110,3 +110,5 @@ To do so you should specify the path to your configuration file in `OOPSYPAD_SET
 ```shell
 export OOPSYPAD_SETTINGS=/path/to/settings/file
 ```
+### Sentry
+To enable Sentry (already enabled for `prod`) you should set `ENABLE_SENTRY = True` and specify `SENTRY_DSN` in your custom configuration file or set `SENTRY_DSN` environment variable.

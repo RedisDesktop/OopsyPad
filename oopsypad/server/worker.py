@@ -1,5 +1,10 @@
+import os
+import logging
+
 from celery import Celery
-from celery.utils.log import get_task_logger
+import raven
+from raven.contrib.celery import register_signal, register_logger_signal
+from raven.versioning import fetch_git_sha
 
 from oopsypad.server import models
 from oopsypad.server.run import app
@@ -25,16 +30,27 @@ def make_celery(app):
 
 celery = make_celery(app)
 
-logger = get_task_logger(__name__)
+logger = logging.getLogger(__name__)
+
+
+@celery.on_after_configure.connect
+def setup_tasks(sender, **kwargs):
+    with app.app_context():
+        if app.config.get('ENABLE_SENTRY'):
+            client = raven.Client(
+                app.config['SENTRY_DSN'],
+                release=fetch_git_sha(os.path.join(app.config['ROOT_DIR'])))
+            register_logger_signal(client, logger=logger)
+            register_signal(client)
 
 
 @celery.task
 def process_minidump(minidump_id):
-    logger.warning('Processing minidump {}...'.format(minidump_id))
+    logger.info('Processing minidump {}...'.format(minidump_id))
 
     minidump = models.Minidump.get_by_id(minidump_id)
     if not minidump:
-        logger.warning('Minidump {} was not found.'.format(minidump_id))
+        logger.error('Minidump {} was not found.'.format(minidump_id))
         return
     minidump.get_stacktrace()
     minidump.parse_stacktrace()

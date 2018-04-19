@@ -1,5 +1,6 @@
 import os
 import subprocess
+from raven.versioning import fetch_git_sha
 
 DEV, TEST, PROD = 'dev', 'test', 'prod'
 
@@ -28,8 +29,14 @@ class Config:
     SECURITY_UNAUTHORIZED_VIEW = None
     SECURITY_REGISTERABLE = True
     SECURITY_SEND_REGISTER_EMAIL = False
-    SECURITY_LOGIN_USER_TEMPLATE = "security/login.html"
-    SECURITY_REGISTER_USER_TEMPLATE = "security/register.html"
+    SECURITY_LOGIN_USER_TEMPLATE = 'security/login.html'
+    SECURITY_REGISTER_USER_TEMPLATE = 'security/register.html'
+
+    ENABLE_SENTRY = False
+    SENTRY_DSN = ''
+    SENTRY_CONFIG = {
+        'release': fetch_git_sha(ROOT_DIR),
+    }
 
 
 class DevConfig(Config):
@@ -48,6 +55,8 @@ class TestConfig(Config):
 class ProdConfig(Config):
     DEBUG = False
     MONGODB_SETTINGS = {'DB': DB_NAMES[PROD]}
+
+    ENABLE_SENTRY = True
 
 
 app_config = {
