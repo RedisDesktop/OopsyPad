@@ -63,7 +63,7 @@ def create_app(config_name=None):
         user_datastore.find_or_create_role(name='developer')
         user_datastore.find_or_create_role(name='sym_uploader')
         # Create test user
-        if config_name in (config.DEV, config.TEST):
+        if app.config['CREATE_TEST_USERS']:
             create_test_users()
 
     return app

@@ -14,15 +14,17 @@ DB_NAMES = {
 class Config:
     SECRET_KEY = 'dev'
 
-    MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # 50 MB
+    CREATE_TEST_USERS = False
 
-    CELERY_BROKER_URL = 'redis://localhost:6379/1'
-    CELERY_RESULT_BACKEND = 'redis://localhost:6379/1'
+    MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # 50 MB
 
     ROOT_DIR = subprocess.check_output(
         ['git', 'rev-parse', '--show-toplevel']).rstrip().decode()
     DUMPS_DIR = os.path.join(ROOT_DIR, 'dumps')
     SYMFILES_DIR = os.path.join(ROOT_DIR, 'symbols')
+
+    CELERY_BROKER_URL = 'redis://localhost:6379/1'
+    CELERY_RESULT_BACKEND = 'redis://localhost:6379/1'
 
     SECURITY_PASSWORD_HASH = 'sha512_crypt'
     SECURITY_PASSWORD_SALT = SECRET_KEY
@@ -41,19 +43,24 @@ class Config:
 
 class DevConfig(Config):
     DEBUG = True
+    CREATE_TEST_USERS = True
+
     MONGODB_SETTINGS = {'DB': DB_NAMES[DEV]}
 
 
 class TestConfig(Config):
     DEBUG = False
     TESTING = True
+    CREATE_TEST_USERS = True
 
     MONGODB_SETTINGS = {'DB': DB_NAMES[TEST]}
+
     LIVESERVER_PORT = 8000
 
 
 class ProdConfig(Config):
     DEBUG = False
+
     MONGODB_SETTINGS = {'DB': DB_NAMES[PROD]}
 
     ENABLE_SENTRY = True
