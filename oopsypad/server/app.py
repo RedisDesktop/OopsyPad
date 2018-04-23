@@ -15,16 +15,12 @@ from oopsypad.server.security import user_datastore, load_security_extensions
 
 def create_app(config_name=None):
     if not config_name:
-        env = os.getenv('OOPSY_ENV').lower()
-        if env:
-            if env in config.app_config:
-                config_name = env
-            else:
-                print('"{}" env is not supported, running on "{}".'.format(
-                    env, config.PROD))
-                config_name = config.PROD
+        env = os.getenv('OOPSY_ENV', config.PROD).lower()
+        if env in config.app_config:
+            config_name = env
         else:
-            config_name = config.PROD
+            print('"{}" env is not supported, running on "{}".'.format(
+                env, config.PROD))
 
     app = Flask(__name__)
 
