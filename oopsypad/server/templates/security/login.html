@@ -1,5 +1,5 @@
-{% from "security/_macros.html" import render_field_with_errors, render_field %}
 {% extends "layout.html" %}
+{% from "security/_macros.html" import render_field_with_errors, render_field %}
 {% block title %}Sign In{% endblock %}
 {% block content %}
 <div class="container">
@@ -11,9 +11,14 @@
         {{ render_field_with_errors(login_user_form.password) }}
         {{ render_field_with_errors(login_user_form.remember) }}
 
-        {{ render_field(login_user_form.submit, class='btn btn-primary btn-lg btn-block', value='Sign In') }}
+        {{ render_field(login_user_form.submit, class='btn btn-primary btn-lg btn-block text-uppercase', value='Sign In') }}
     </form>
-
-    <a href="{{ url_for_security('register') }}{% if 'next' in request.args %}?next={{ request.args.next | urlencode }}{% endif %}">{{ _('Register') }}</a>
+    <p>
+        Do not have an account?
+        <a class="btn btn-default"
+           href="{{ url_for_security('register') }}{% if 'next' in request.args %}?next={{ request.args.next | urlencode }}{% endif %}">
+            {{ _('Sign Up') }}
+        </a>
+    </p>
 </div>
 {% endblock %}

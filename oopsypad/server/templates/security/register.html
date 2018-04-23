@@ -1,8 +1,20 @@
-{% from "security/_macros.html" import render_field_with_errors, render_field %}
 {% extends "layout.html" %}
+{% from "security/_macros.html" import render_field_with_errors, render_field %}
 {% block title %}Sign Up{% endblock %}
 {% block content %}
 <div class="container">
+{% if setup_admin %}
+    <h1>Setup Admin Account</h1>
+    <form action="{{ url_for_security('register') }}" method="POST" name="register_user_form" class="form">
+        {{ register_user_form.hidden_tag() }}
+
+        {{ render_field_with_errors(register_user_form.email, label='Admin Email') }}
+        {{ render_field_with_errors(register_user_form.password, label='Admin Password') }}
+        {{ render_field_with_errors(register_user_form.password_confirm) }}
+
+        {{ render_field(register_user_form.submit, class='btn btn-primary btn-lg btn-block text-uppercase', value='Submit') }}
+    </form>
+{% else %}
     <h1>Sign Up</h1>
     <form action="{{ url_for_security('register') }}" method="POST" name="register_user_form" class="form">
         {{ register_user_form.hidden_tag() }}
@@ -11,9 +23,16 @@
         {{ render_field_with_errors(register_user_form.password) }}
         {{ render_field_with_errors(register_user_form.password_confirm) }}
 
-        {{ render_field(register_user_form.submit, class='btn btn-primary btn-lg btn-block', value='Sign Up') }}
+        {{ render_field(register_user_form.submit, class='btn btn-primary btn-lg btn-block text-uppercase', value='Sign Up') }}
     </form>
+    <p>
+        Already have an account?
+        <a class="btn btn-default"
+           href="{{ url_for_security('login') }}{% if 'next' in request.args %}?next={{ request.args.next|urlencode }}{% endif %}">
+            {{ _('Sign In') }}
+        </a>
+    </p>
 
-    <a href="{{ url_for_security('login') }}{% if 'next' in request.args %}?next={{ request.args.next|urlencode }}{% endif %}">{{ _('Login') }}</a>
+{% endif %}
 </div>
 {% endblock %}
