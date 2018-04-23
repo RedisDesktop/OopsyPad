@@ -4,7 +4,7 @@ import random
 import warnings
 
 from dateutil.relativedelta import relativedelta
-from flask import jsonify, request, redirect, flash
+from flask import flash, jsonify, redirect, request, url_for
 from flask_admin import Admin, AdminIndexView, expose
 from flask_admin.base import MenuLink
 from flask_admin.contrib.mongoengine import ModelView
@@ -59,6 +59,8 @@ class NotAuthenticatedMenuLink(MenuLink):
 class CustomAdminView(AdminIndexView):
     @expose('/')
     def index(self):
+        if models.User.objects.count() == 0:
+            return redirect(url_for('security.register'))
         return self.render('admin/index.html')
 
 
@@ -182,6 +184,10 @@ class IssueView(DeveloperModelView):
                            per_page=per_page)
 
 
+class UserView(AdminModelView):
+    column_list = ('email', 'active', 'roles')
+
+
 admin = Admin(
     name='OopsyPad',
     template_mode='bootstrap3',
@@ -203,3 +209,4 @@ with warnings.catch_warnings():
     admin.add_view(CrashReportView(
         models.Minidump, name='Crash Reports', endpoint='crash-reports'))
     admin.add_view(IssueView(models.Issue, name='Issues'))
+    admin.add_view(UserView(models.User, name='Users'))
