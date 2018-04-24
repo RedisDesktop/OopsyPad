@@ -52,17 +52,26 @@ To send symbol files and manage projects with command line you should obtain an 
 ### Symbol files
 > Symbol files are necessary to decode minidump's binary data into human-readable stack trace.
 
-To generate a symbol file and send it to the server use `oopsy_send_symfile` command.
-Required arguments are:
-- `bin-path` to the product executable file
-- `symfile-name` for the resulting symbol file
-- `address` where OopsyPad is hosted
-- `version` of the product
-
-`oopsy_send_symfile` command:
+To generate a symbol file use `oopsy_create_symfile` command:
 ```shell
-oopsy_send_symfile path/to/product/executable rdm.sym 0.9
+oopsy_create_symfile path/to/product/executable rdm.sym
 ```
+Required arguments are:
+- `bin-path` - the path to the product executable file
+- `symfile-name` - the name for the resulting symbol file
+
+The output will be the path to the generated symbol file which should be used in `oopsy_send_symfile` command.
+```shell
+export SYMFILE_PATH=`oopsy_create_symfile path/to/product/executable rdm.sym`
+```
+
+To send generated symbol file to the server use `oopsy_send_symfile` command:
+```shell
+oopsy_send_symfile $SYMFILE_PATH 0.9
+```
+Required arguments are:
+- `symfile-path` - the path to the resulting symbol file
+- `version` of the product
 
 ### Projects
 Before sending any dump files to the server you should send your project information including name, minimum allowed version `-v` and allowed platforms `-p` using `oopsy_admin project add` command:
@@ -84,12 +93,6 @@ To send minidumps for processing use `oopsy_crash_report` command:
 oopsy_crash_report /path/to/minidump rdm 0.9 Linux
 ```
 Or send a POST request to the `/crash-report` endpoint.
-Required arguments are:
-- `product` name
-- `version`
-- `platform`
-- `upload_file_minidump` - path to minidump file
-
 POST request using `curl`:
 ```shell
 curl -X POST \
@@ -99,6 +102,11 @@ curl -X POST \
      -F upload_file_minidump=@/path/to/minidump \
      http://example.com/crash-report
 ```
+Required arguments are:
+- `product` - product name
+- `version` - product version
+- `platform` - platform where the crash has occurred
+- `upload_file_minidump` - path to the minidump file
 
 ## Configuration
 There are `prod` (default), `test` and `dev` environments available. To change OopsyPad environment set environment variable `OOPSY_ENV`, e.g.:
