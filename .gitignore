@@ -113,3 +113,6 @@ venv.bak/
 .mypy_cache/
 
 celeryd.pid
+
+oopsypad/bin/dump*
+oopsypad/bin/*walk*
