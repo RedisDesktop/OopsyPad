@@ -1,1 +1,2 @@
+include oopsypad/bin/*
 recursive-include oopsypad/server/templates *

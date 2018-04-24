@@ -1,5 +1,4 @@
 import os
-import subprocess
 from raven.versioning import fetch_git_sha
 
 DEV, TEST, PROD = 'dev', 'test', 'prod'
@@ -18,8 +17,7 @@ class Config:
 
     MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # 50 MB
 
-    ROOT_DIR = subprocess.check_output(
-        ['git', 'rev-parse', '--show-toplevel']).rstrip().decode()
+    ROOT_DIR = os.path.join(os.path.dirname(__file__), "..", "bin")
     DUMPS_DIR = os.path.join(ROOT_DIR, 'dumps')
     SYMFILES_DIR = os.path.join(ROOT_DIR, 'symbols')
 
