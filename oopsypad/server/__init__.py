@@ -42,7 +42,7 @@ def crash_report():
             platform, product)), 400
     minidump = request.files.get('upload_file_minidump')
     if not minidump:
-        return jsonify(error='Minidump file is required.')
+        return jsonify(error='Minidump file is required.'), 400
     try:
         models.Minidump.create_minidump(product=product,
                                         version=version,
