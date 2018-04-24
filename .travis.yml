@@ -51,7 +51,8 @@ script:
   - oopsy_admin login -u admin@test.com -p test
   - oopsy_admin project add test_app -v 1.0 -p Linux
   - pushd ./tests/integration/test_app/bin
-  - oopsy_send_symfile ./test_app test_app.sym 1.0.0
+  - export OOPSY_SYMFILE_PATH=`oopsy_create_symfile ./test_app test_app.sym`
+  - oopsy_send_symfile ${OOPSY_SYMFILE_PATH} 1.0.0
   - ./test_app || true && popd
   - pip install -r requirements-test.txt
   - py.test
