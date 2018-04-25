@@ -1,5 +1,4 @@
 import os
-from raven.versioning import fetch_git_sha
 
 DEV, TEST, PROD = 'dev', 'test', 'prod'
 
@@ -17,7 +16,14 @@ class Config:
 
     MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # 50 MB
 
-    ROOT_DIR = os.path.join(os.path.dirname(__file__), "..", "bin")
+    ROOT_DIR = os.path.dirname(os.path.dirname(__file__))
+
+    BIN_DIR = os.path.join(ROOT_DIR, 'bin')
+    # 3rd party binaries
+    DUMP_SYMS = os.path.join(BIN_DIR, 'dump_syms')
+    MINIDUMP_STACKWALK = os.path.join(BIN_DIR, 'minidump_stackwalk')
+    STACKWALKER = os.path.join(BIN_DIR, 'stackwalker')
+
     DUMPS_DIR = os.path.join(ROOT_DIR, 'dumps')
     SYMFILES_DIR = os.path.join(ROOT_DIR, 'symbols')
 
@@ -34,9 +40,6 @@ class Config:
 
     ENABLE_SENTRY = False
     SENTRY_DSN = ''
-    SENTRY_CONFIG = {
-        'release': fetch_git_sha(ROOT_DIR),
-    }
 
 
 class DevConfig(Config):

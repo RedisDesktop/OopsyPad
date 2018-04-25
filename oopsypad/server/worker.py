@@ -1,10 +1,8 @@
-import os
 import logging
 
 from celery import Celery
 import raven
 from raven.contrib.celery import register_signal, register_logger_signal
-from raven.versioning import fetch_git_sha
 
 from oopsypad.server import models
 from oopsypad.server.run import app
@@ -38,8 +36,7 @@ def setup_tasks(sender, **kwargs):
     with app.app_context():
         if app.config.get('ENABLE_SENTRY'):
             client = raven.Client(
-                app.config['SENTRY_DSN'],
-                release=fetch_git_sha(os.path.join(app.config['ROOT_DIR'])))
+                app.config['SENTRY_DSN'])
             register_logger_signal(client, logger=logger)
             register_signal(client)
 

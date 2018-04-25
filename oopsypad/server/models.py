@@ -19,10 +19,6 @@ from oopsypad.server.helpers import last_12_months
 
 DUMPS_DIR = Config.DUMPS_DIR
 SYMFILES_DIR = Config.SYMFILES_DIR
-MINIDUMP_STACKWALK = os.path.join(
-    Config.ROOT_DIR, '3rdparty/breakpad/src/processor/minidump_stackwalk')
-STACKWALKER = os.path.join(
-    Config.ROOT_DIR, '3rdparty/minidump-stackwalk/stackwalker')
 
 db = MongoEngine()
 
@@ -77,6 +73,8 @@ class Minidump(mongo.Document):
 
     minidump = fields.FileField()  # Google Breakpad minidump
 
+    file_path = fields.StringField()
+
     stacktrace = fields.StringField()
 
     stacktrace_json = fields.DictField()
@@ -97,26 +95,27 @@ class Minidump(mongo.Document):
             os.makedirs(DUMPS_DIR)
         try:
             self.filename = secure_filename(minidump_file.filename)
-            target_path = self.get_minidump_path()
+            target_path = self.get_target_minidump_path()
             minidump_file.save(target_path)
             with open(target_path, 'rb') as minidump:
                 if self.minidump:
                     self.minidump.replace(minidump)
                 else:
                     self.minidump.put(minidump)
+            self.file_path = target_path
             self.save()
         except Exception as e:
             current_app.logger.exception(
                 'Cannot save minidump file: {}'.format(e))
 
-    def get_minidump_path(self):
+    def get_target_minidump_path(self):
         return os.path.join(DUMPS_DIR, self.filename)
 
     def get_stacktrace(self):
-        minidump_path = self.get_minidump_path()
+        minidump_path = self.file_path
         try:
             minidump_stackwalk_output = subprocess.check_output(
-                [MINIDUMP_STACKWALK, minidump_path, SYMFILES_DIR],
+                [Config.MINIDUMP_STACKWALK, minidump_path, SYMFILES_DIR],
                 stderr=subprocess.DEVNULL)
             self.stacktrace = minidump_stackwalk_output.decode()
             self.save()
@@ -125,10 +124,10 @@ class Minidump(mongo.Document):
                 'Cannot get stacktrace: {}'.format(e))
 
     def parse_stacktrace(self):
-        minidump_path = self.get_minidump_path()
+        minidump_path = self.file_path
         try:
             stackwalker_output = subprocess.check_output(
-                [STACKWALKER, '--pretty', minidump_path, SYMFILES_DIR],
+                [Config.STACKWALKER, '--pretty', minidump_path, SYMFILES_DIR],
                 stderr=subprocess.DEVNULL)
 
             self.stacktrace_json = json.loads(stackwalker_output.decode())
