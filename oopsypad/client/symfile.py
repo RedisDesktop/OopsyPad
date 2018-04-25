@@ -8,13 +8,10 @@ import requests
 from oopsypad.client.base import oopsy, get_address, get_token
 from oopsypad.server.config import Config
 
-DUMP_SYMS_PATH = '3rdparty/breakpad/src/tools/linux/dump_syms/dump_syms'
-DUMP_SYMS = os.path.join(Config.ROOT_DIR, DUMP_SYMS_PATH)
-
 
 def create_symfile(bin_path, symfile_name, symfile_root):
     dump_syms_output = subprocess.check_output(
-        [DUMP_SYMS, bin_path], stderr=subprocess.DEVNULL)
+        [Config.DUMP_SYMS, bin_path], stderr=subprocess.DEVNULL)
     with open(symfile_name, 'wb') as f:
         f.write(dump_syms_output)
 
