@@ -44,6 +44,13 @@ def send_symfile(symfile_path, address, version):
 @click.argument('bin-path')
 @click.argument('symfile-name')
 def oopsy_create_symfile(bin_path, symfile_name):
+    """
+    \b
+    BIN-PATH
+        Product executable binary path.
+    SYMFILE-NAME
+        Target symbol file name.
+    """
     symfile_path = create_symfile(bin_path, symfile_name, Config.SYMFILES_DIR)
     click.echo(symfile_path)
 
@@ -54,10 +61,8 @@ def oopsy_create_symfile(bin_path, symfile_name):
 def oopsy_send_symfile(symfile_path, version):
     """
     \b
-    BIN-PATH
-        Product executable binary path.
-    SYMFILE-NAME
-        Target symbol file name.
+    SYMFILE-PATH
+        Path to the generated symbol file.
     VERSION
         Product version.
     """
