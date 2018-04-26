@@ -6,10 +6,10 @@ from flask import Flask, jsonify, render_template, request
 from flask_security import Security
 from raven.contrib.flask import Sentry
 
-from oopsypad.server import api_bp, public_bp, config
+from oopsypad.server import api, bp, config
 from oopsypad.server.admin import admin
 from oopsypad.server.demo import create_test_users
-from oopsypad.server.models import db, User
+from oopsypad.server.models import db
 from oopsypad.server.security import user_datastore, load_security_extensions
 
 
@@ -37,15 +37,16 @@ def create_app(config_name=None):
     # Setup security
     load_security_extensions(app)
 
-    @security.register_context_processor
-    def security_register_processor():
-        if User.objects.count() == 0:
-            return {'setup_admin': True}
-        return {}
+    @security.login_context_processor
+    def security_login_processor():
+        return {'register_endpoint': (app.config['SECURITY_REGISTER_URL']
+                                      if app.config['SECURITY_REGISTERABLE']
+                                      else app.config['SETUP_ADMIN_URL']),
+                'registerable': app.config['SECURITY_REGISTERABLE']}
 
     # Register blueprints
-    app.register_blueprint(api_bp, url_prefix='/api')
-    app.register_blueprint(public_bp)
+    app.register_blueprint(api.bp, url_prefix='/api')
+    app.register_blueprint(bp)
 
     # Setup logging
     handler = RotatingFileHandler(

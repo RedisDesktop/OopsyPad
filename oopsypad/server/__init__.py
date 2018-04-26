@@ -1,21 +1,24 @@
-from flask import Blueprint, jsonify, request
-from flask_security import (current_user, login_required, http_auth_required,
-                            roles_accepted)
+from flask import (after_this_request, Blueprint, current_app, jsonify, request,
+                   flash, redirect)
+from flask_security import current_user, http_auth_required
+from flask_security.utils import (get_post_register_redirect, hash_password,
+                                  login_user, url_for_security)
+from flask_security.views import _commit
+from werkzeug.local import LocalProxy
 
 from oopsypad.server import models
+from oopsypad.server.forms import AdminRegisterForm
+
+bp = Blueprint('public', __name__)
 
 
-api_bp = Blueprint('oopsypad_api', __name__)
-public_bp = Blueprint('oopsypad', __name__)
-
-
-@public_bp.route('/token', methods=['GET'])
+@bp.route('/token', methods=['GET'])
 @http_auth_required
 def get_auth_token():
     return jsonify(token=current_user.auth_token)
 
 
-@public_bp.route('/crash-report', methods=['POST'])
+@bp.route('/crash-report', methods=['POST'])
 def crash_report():
     data = request.form
 
@@ -53,67 +56,37 @@ def crash_report():
 
     return jsonify(ok='Thank you!'), 201
 
-
-@api_bp.route('/data/symfile/<product>/<id>', methods=['POST'])
-@login_required
-@roles_accepted('admin', 'sym_uploader')
-def add_symfile(product, id):
-    data = request.form
-    version = data.get('version')
-    platform = data.get('platform')
-    symfile = request.files.get('symfile')
-
-    try:
-        models.Symfile.create_symfile(product=product,
-                                      version=version,
-                                      platform=platform,
-                                      file=symfile,
-                                      symfile_id=id)
-        return jsonify(ok='Symbol file was saved.'), 201
-    except Exception as e:
-        return jsonify(error='Something went wrong: {}'.format(e)), 400
+_security = LocalProxy(lambda: current_app.extensions['security'])
+_datastore = LocalProxy(lambda: _security.datastore)
 
 
-@api_bp.route('/projects/<name>', methods=['POST'])
-@login_required
-@roles_accepted('admin')
-def add_project(name):
-    try:
-        project = models.Project.create_project(name=name)
-
-        min_version = request.json.get('min_version')
-        if min_version:
-            project.update_min_version(min_version)
-
-        allowed_platforms = request.json.get('allowed_platforms')
-        if allowed_platforms:
-            for p in allowed_platforms:
-                platform = models.Platform.create_platform(p)
-                project.add_allowed_platform(platform)
-
-        return jsonify(ok='Project was saved. \n{}'.format(project)), 201
-    except Exception as e:
-        return jsonify(error='Something went wrong: {}'.format(e)), 400
+def create_admin(**kwargs):
+    kwargs['password'] = hash_password(kwargs['password'])
+    user = _datastore.create_user(**kwargs)
+    _datastore.commit()
+    return user
 
 
-@api_bp.route('/projects/<name>/delete', methods=['DELETE'])
-@login_required
-@roles_accepted('admin')
-def delete_project(name):
-    try:
-        models.Project.objects.get(name=name).delete()
-        return jsonify(ok='{} project was deleted.'.format(name)), 202
-    except Exception as e:
-        return jsonify(error='Something went wrong: {}'.format(e)), 400
+@bp.route('/setup-admin', methods=['GET', 'POST'])
+def setup_admin():
+    if models.User.objects.count() > 0:
+        flash('Admin is already created.', 'warning')
+        return redirect(url_for_security('login'))
 
+    form_data = request.form
 
-@api_bp.route('/projects')
-@login_required
-@roles_accepted('admin')
-def list_projects():
-    try:
-        projects = [models.Project.get_project_dict(p)
-                    for p in models.Project.objects()]
-        return jsonify(projects=projects), 200
-    except Exception as e:
-        return jsonify(error='Something went wrong: {}'.format(e)), 400
+    form = AdminRegisterForm(form_data)
+
+    if form.validate_on_submit():
+        user = create_admin(**form.to_dict())
+        form.user = user
+
+        after_this_request(_commit)
+        login_user(user)
+
+        redirect_url = get_post_register_redirect()
+
+        return redirect(redirect_url)
+
+    return _security.render_template('security/setup_admin.html',
+                                     setup_admin_form=form)

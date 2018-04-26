@@ -4,15 +4,15 @@ import random
 import warnings
 
 from dateutil.relativedelta import relativedelta
-from flask import flash, jsonify, redirect, request, url_for
+from flask import current_app, flash, jsonify, redirect, request
 from flask_admin import Admin, AdminIndexView, expose
 from flask_admin.base import MenuLink
 from flask_admin.contrib.mongoengine import ModelView
 from flask_admin.model.template import macro
 from flask_security import current_user
 
-from oopsypad.server.helpers import last_12_months
 from oopsypad.server import models
+from oopsypad.server.helpers import last_12_months
 
 
 def get_random_color():
@@ -60,7 +60,7 @@ class CustomAdminView(AdminIndexView):
     @expose('/')
     def index(self):
         if models.User.objects.count() == 0:
-            return redirect(url_for('security.register'))
+            return redirect(current_app.config['SETUP_ADMIN_URL'])
         return self.render('admin/index.html')
 
 
