@@ -11,10 +11,9 @@
     <!-- Bootstrap core CSS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
   </head>
-
   <body>
-
     <main role="main" class="container" style="padding-top: 100px;">
+        {% block messages %}{% endblock %}
         {% block content %}{% endblock %}
     </main>
     {% block scripts %}

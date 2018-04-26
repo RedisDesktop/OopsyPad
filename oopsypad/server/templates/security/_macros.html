@@ -25,3 +25,22 @@
 {% macro render_field(field) %}
 <p>{{ field(**kwargs) | safe }}</p>
 {% endmacro %}
+
+{% macro messages() %}
+  {% with messages = get_flashed_messages(with_categories=True) %}
+    {% if messages %}
+      {% for category, m in messages %}
+        {% if category %}
+        {# alert-error changed to alert-danger in bootstrap 3, mapping is for backwards compatibility #}
+        {% set mapping = {'message': 'info', 'error': 'danger'} %}
+        <div class="alert alert-{{ mapping.get(category, category) }} alert-dismissable">
+        {% else %}
+        <div class="alert alert-dismissable">
+        {% endif %}
+          <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+          {{ m }}
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+{% endmacro %}
