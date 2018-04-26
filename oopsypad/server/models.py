@@ -47,10 +47,7 @@ class User(mongo.Document, UserMixin):
 
     def save(self, *args, **kwargs):
         if not self.roles:
-            if User.objects.count() == 0:
-                self.roles = [Role.objects(name='admin').first()]
-            else:
-                self.roles = [Role.objects(name='developer').first()]
+            self.roles = [Role.objects(name='developer').first()]
         if not self.auth_token:
             with current_app.app_context():
                 self.auth_token = hmac.new(
