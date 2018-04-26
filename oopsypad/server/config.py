@@ -34,9 +34,12 @@ class Config:
     SECURITY_PASSWORD_SALT = SECRET_KEY
     SECURITY_UNAUTHORIZED_VIEW = None
     SECURITY_REGISTERABLE = True
+    SECURITY_REGISTER_URL = '/register'
     SECURITY_SEND_REGISTER_EMAIL = False
     SECURITY_LOGIN_USER_TEMPLATE = 'security/login.html'
     SECURITY_REGISTER_USER_TEMPLATE = 'security/register.html'
+
+    SETUP_ADMIN_URL = '/setup-admin'
 
     ENABLE_SENTRY = False
     SENTRY_DSN = ''
