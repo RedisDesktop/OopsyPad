@@ -1,0 +1,18 @@
+{% extends "layout.html" %}
+{% from "security/_macros.html" import render_field_with_errors, render_field, messages %}
+{% block title %}Setup Admin{% endblock %}
+{% block messages %}{{ messages() }}{% endblock %}
+{% block content %}
+<div class="container">
+    <h1>Setup Admin Account</h1>
+    <form action="{{ url_for('public.setup_admin') }}" method="POST" name="setup_admin_form" class="form">
+        {{ setup_admin_form.hidden_tag() }}
+
+        {{ render_field_with_errors(setup_admin_form.email) }}
+        {{ render_field_with_errors(setup_admin_form.password) }}
+        {{ render_field_with_errors(setup_admin_form.password_confirm) }}
+
+        {{ render_field(setup_admin_form.submit, class='btn btn-primary btn-lg btn-block text-uppercase') }}
+    </form>
+</div>
+{% endblock %}
