@@ -60,8 +60,9 @@ _security = LocalProxy(lambda: current_app.extensions['security'])
 _datastore = LocalProxy(lambda: _security.datastore)
 
 
-def create_admin(**kwargs):
+def register_admin(**kwargs):
     kwargs['password'] = hash_password(kwargs['password'])
+    kwargs['roles'] = ['admin']
     user = _datastore.create_user(**kwargs)
     _datastore.commit()
     return user
@@ -78,7 +79,7 @@ def setup_admin():
     form = AdminRegisterForm(form_data)
 
     if form.validate_on_submit():
-        user = create_admin(**form.to_dict())
+        user = register_admin(**form.to_dict())
         form.user = user
 
         after_this_request(_commit)
