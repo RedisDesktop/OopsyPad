@@ -73,6 +73,8 @@ Required arguments are:
 - `symfile-path` - the path to the resulting symbol file
 - `version` of the product
 
+> Symbol file contains a product name and a platform info so there's no need to include them in the command.
+
 ### Projects
 Before sending any dump files to the server you should send your project information including name, minimum allowed version `-v` and allowed platforms `-p` using `oopsy_admin project add` command:
 ```shell
