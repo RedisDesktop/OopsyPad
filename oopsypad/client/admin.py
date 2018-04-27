@@ -14,7 +14,7 @@ def oopsy_admin(ctx):
 @click.option('--user', '-u', prompt='Email')
 @click.option('--password', '-p', prompt=True, hide_input=True)
 @click.pass_context
-def login(ctx, user, password):
+def oopsy_admin_login(ctx, user, password):
     response = requests.get(
         '{}/token'.format(ctx.obj['ADDRESS']), auth=(user, password))
     if response.status_code == 200:
@@ -25,18 +25,18 @@ def login(ctx, user, password):
 
 
 @oopsy_admin.group(name='project')
-def project():
+def oopsy_admin_project():
     pass
 
 
-@project.command(name='add')
+@oopsy_admin_project.command(name='add')
 @click.argument('project-name')
 @click.option('--min-version', '-v', help='Project minimum allowed version.')
 @click.option('--platforms', '-p', multiple=True,
               help='Allowed platforms (multiple values are acceptable, '
                    'e.g. -p <p1> -p <p2>).')
 @click.pass_context
-def add_project(ctx, project_name, min_version, platforms):
+def oopsy_admin_project_add(ctx, project_name, min_version, platforms):
     headers = {'Authorization': get_token()}
     project_data = {'min_version': min_version, 'allowed_platforms': platforms}
     response = requests.post(
@@ -50,10 +50,10 @@ def add_project(ctx, project_name, min_version, platforms):
         click.echo(response.json().get('error', 'ERROR'))
 
 
-@project.command(name='delete')
+@oopsy_admin_project.command(name='delete')
 @click.argument('project-name')
 @click.pass_context
-def delete_project(ctx, project_name):
+def oopsy_admin_project_delete(ctx, project_name):
     headers = {'Authorization': get_token()}
     response = requests.delete(
         '{}/api/projects/{}/delete'.format(ctx.obj['ADDRESS'], project_name),
@@ -66,9 +66,9 @@ def delete_project(ctx, project_name):
         click.echo(response.json().get('error', 'ERROR'))
 
 
-@project.command(name='list')
+@oopsy_admin_project.command(name='list')
 @click.pass_context
-def list_projects(ctx):
+def oopsy_admin_project_list(ctx):
     headers = {'Authorization': get_token()}
     response = requests.get('{}/api/projects'.format(ctx.obj['ADDRESS']),
                             headers=headers)
