@@ -40,10 +40,15 @@ def send_symfile(symfile_path, address, version):
     return r
 
 
-@oopsy.command(name='oopsy_create_symfile')
+@oopsy.group('oopsy_symfile')
+def oopsy_symfile():
+    pass
+
+
+@oopsy_symfile.command(name='create')
 @click.argument('bin-path')
 @click.argument('symfile-name')
-def oopsy_create_symfile(bin_path, symfile_name):
+def oopsy_symfile_create(bin_path, symfile_name):
     """
     \b
     BIN-PATH
@@ -55,10 +60,10 @@ def oopsy_create_symfile(bin_path, symfile_name):
     click.echo(symfile_path)
 
 
-@oopsy.command(name='oopsy_send_symfile')
+@oopsy_symfile.command(name='send')
 @click.argument('symfile-path')
 @click.argument('version')
-def oopsy_send_symfile(symfile_path, version):
+def oopsy_symfile_send(symfile_path, version):
     """
     \b
     SYMFILE-PATH
