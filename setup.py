@@ -34,6 +34,7 @@ setup(
     entry_points={
         'console_scripts':
             ['oopsy_run_server = oopsypad.server.run:oopsy_run_server',
+             'oopsy_celery_worker = oopsypad.server.worker:oopsy_celery_worker',
              'oopsy_create_symfile = oopsypad.client.symfile:oopsy_create_symfile',
              'oopsy_send_symfile = oopsypad.client.symfile:oopsy_send_symfile',
              'oopsy_crash_report = oopsypad.client.minidump:oopsy_crash_report',
