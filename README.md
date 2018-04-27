@@ -31,13 +31,23 @@ Optionally you can specify `host`, `port` and `workers` (which by default are `1
 ```shell
 oopsy_run_server --host example.com --port 5050
 ```
-After that run worker for minidump processing.
+After that run Celery worker for minidump processing:
 ```shell
-./run_celery_worker.sh
+oopsy_celery_worker run
 ```
-In case the file is not executable yet:
+> Restart the worker using the command above each time the server is restarted.
+
+To stop the worker use:
 ```shell
-chmod +x run_celery_worker.sh
+oopsy_celery_worker stop
+```
+To show log file contents use:
+```shell
+oopsy_celery_worker logs
+```
+For example to show last 10 log entries use `-n` option:
+```shell
+oopsy_celery_worker logs -n 10
 ```
 
 ### OOPSY_HOST 
@@ -52,22 +62,22 @@ To send symbol files and manage projects with command line you should obtain an 
 ### Symbol files
 > Symbol files are necessary to decode minidump's binary data into human-readable stack trace.
 
-To generate a symbol file use `oopsy_create_symfile` command:
+To generate a symbol file use `oopsy_symfile create` command:
 ```shell
-oopsy_create_symfile path/to/product/executable rdm.sym
+oopsy_symfile create path/to/product/executable rdm.sym
 ```
 Required arguments are:
 - `bin-path` - the path to the product executable file
 - `symfile-name` - the name for the resulting symbol file
 
-The output will be the path to the generated symbol file which should be used in `oopsy_send_symfile` command.
+The output will be the path to the generated symbol file which should be used in `oopsy_symfile send` command.
 ```shell
-export SYMFILE_PATH=`oopsy_create_symfile path/to/product/executable rdm.sym`
+export SYMFILE_PATH=`oopsy_symfile create path/to/product/executable rdm.sym`
 ```
 
-To send generated symbol file to the server use `oopsy_send_symfile` command:
+To send generated symbol file to the server use `oopsy_symfile send` command:
 ```shell
-oopsy_send_symfile $SYMFILE_PATH 0.9
+oopsy_symfile send $SYMFILE_PATH 0.9
 ```
 Required arguments are:
 - `symfile-path` - the path to the resulting symbol file
