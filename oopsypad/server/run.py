@@ -1,4 +1,3 @@
-import os
 import subprocess
 
 import click
@@ -22,9 +21,8 @@ app = create_app()
               help='Gunicorn workers (default is {}).'.format(GUNICORN_WORKERS))
 @click.argument('gunicorn-options', nargs=-1, type=click.UNPROCESSED)
 def oopsy_run_server(host, port, workers, gunicorn_options):
-    os.chdir(app.root_path)
     app.logger.info('Running OopsyPad from {}.'.format(app.root_path))
     subprocess.run(['gunicorn',
                     '-w {}'.format(workers),
                     '-b {}:{}'.format(host, port),
-                    'run:app'] + list(gunicorn_options))
+                    'oopsypad.server.run:app'] + list(gunicorn_options))
