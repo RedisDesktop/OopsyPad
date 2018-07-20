@@ -81,4 +81,4 @@ def oopsy_symfile_send(symfile_path, version):
             click.echo(response.json().get('error', 'ERROR'))
         except ValueError as e:
             click.echo("Server responded %s: %s" % 
-                       (response.status_code, response.body))
+                       (response.status_code, response.content))
