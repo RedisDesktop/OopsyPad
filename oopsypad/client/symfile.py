@@ -56,7 +56,7 @@ def oopsy_symfile_create(bin_path, symfile_name):
     SYMFILE-NAME
         Target symbol file name.
     """
-    symfile_path = create_symfile(bin_path, symfile_name, Config.SYMFILES_DIR)
+    symfile_path = create_symfile(bin_path, symfile_name, os.getcwd())
     click.echo(symfile_path)
 
 
