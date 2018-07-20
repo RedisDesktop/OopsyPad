@@ -5,12 +5,18 @@
 OopsyPad is a Breakpad minidumps processing tool for [RedisDesktopManager](https://github.com/uglide/RedisDesktopManager).
 
 ## Requirements
+### Server:
 - `Python 3`
 - `MongoDB`
-- `build-essential libcurl4-gnutls-dev pkg-config` for building breakpad deps
 - `redis-server` (Celery backend)
+- `build-essential libcurl4-gnutls-dev pkg-config` for building breakpad deps
+### Client:
+- `Python 3`
+- OSX: `Xcode`
+- Ubuntu: `build-essential libcurl4-gnutls-dev pkg-config`
 
-## Installation
+## Server
+### Installation
 ```shell
 git clone --recursive https://github.com/RedisDesktop/OopsyPad.git
 cd OopsyPad/
@@ -21,7 +27,7 @@ Install and run [`MongoDB`](https://docs.mongodb.com/manual/installation/).
 
 > __Note__: In case of using virtualenv keep it inside of the repository directory so the server could access 3rd party binaries.
 
-## Usage
+### Usage
 
 To run the server use `oopsy_run_server` command.
 ```shell
@@ -49,6 +55,21 @@ For example to show last 10 log entries use `-n` option:
 ```shell
 oopsy_celery_worker logs -n 10
 ```
+
+### Configuration
+There are `prod` (default), `test` and `dev` environments available. To change OopsyPad environment set environment variable `OOPSY_ENV`, e.g.:
+```shell
+export OOPSY_ENV=test
+```
+You may want to add some extra settings for OopsyPad.
+To do so you should specify the path to your configuration file in `OOPSYPAD_SETTINGS` environment variable:
+```shell
+export OOPSYPAD_SETTINGS=/path/to/settings/file
+```
+#### Sentry
+To enable Sentry (already enabled for `prod`) you should set `ENABLE_SENTRY = True` and specify `SENTRY_DSN` in your custom configuration file or set `SENTRY_DSN` environment variable.
+
+## Client
 
 ### OOPSY_HOST 
 To use client shell commands you should specify `OOPSY_HOST` environment variable which is OopsyPad host address.
@@ -119,16 +140,3 @@ Required arguments are:
 - `version` - product version
 - `platform` - platform where the crash has occurred
 - `upload_file_minidump` - path to the minidump file
-
-## Configuration
-There are `prod` (default), `test` and `dev` environments available. To change OopsyPad environment set environment variable `OOPSY_ENV`, e.g.:
-```shell
-export OOPSY_ENV=test
-```
-You may want to add some extra settings for OopsyPad.
-To do so you should specify the path to your configuration file in `OOPSYPAD_SETTINGS` environment variable:
-```shell
-export OOPSYPAD_SETTINGS=/path/to/settings/file
-```
-### Sentry
-To enable Sentry (already enabled for `prod`) you should set `ENABLE_SENTRY = True` and specify `SENTRY_DSN` in your custom configuration file or set `SENTRY_DSN` environment variable.
