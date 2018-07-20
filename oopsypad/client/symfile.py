@@ -77,4 +77,8 @@ def oopsy_symfile_send(symfile_path, version):
     elif response.status_code == 403:
         click.echo(response.reason.capitalize())
     else:
-        click.echo(response.json().get('error', 'ERROR'))
+        try:
+            click.echo(response.json().get('error', 'ERROR'))
+        except ValueError as e:
+            click.echo("Server responded %s: %s" % 
+                       (response.status_code, response.body))
