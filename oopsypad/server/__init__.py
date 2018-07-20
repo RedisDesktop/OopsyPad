@@ -32,7 +32,7 @@ def crash_report():
     version = data.get('version')
     if not version:
         return jsonify(error='Product version is required.')
-    if version < project.min_version:
+    if project.min_version and version < project.min_version:
         return jsonify(
             error='You use an old version. Please download at least {} '
                   'release.'.format(project.min_version)), 400
