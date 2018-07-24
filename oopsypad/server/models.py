@@ -201,15 +201,15 @@ class Minidump(mongo.Document):
 class Symfile(mongo.Document):
     product = fields.StringField()
 
-    version = fields.StringField()
+    version = fields.StringField(required=True)
 
-    platform = fields.StringField()
+    platform = fields.StringField(required=True)
 
-    symfile_name = fields.StringField()
+    symfile_name = fields.StringField(required=True)
 
-    symfile_id = fields.StringField()
+    symfile_id = fields.StringField(required=True)
 
-    symfile = fields.FileField()
+    symfile = fields.FileField(required=True)
 
     date_created = fields.DateTimeField()
 
@@ -239,6 +239,11 @@ class Symfile(mongo.Document):
                           date_created=datetime.now())
             symfile.save_symfile(file)
         return symfile
+
+    def save(self, *args, **kwargs):
+        if not self.date_created:
+            self.date_created = datetime.now()
+        return super().save(**kwargs)
 
     def __str__(self):
         return 'Symfile: {} {} {} {}'.format(self.product,
