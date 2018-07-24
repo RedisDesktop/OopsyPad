@@ -50,10 +50,10 @@ before_script:
 script:
   - oopsy_admin login -u admin@test.com -p test
   - oopsy_admin project add test_app -v 1.0 -p Linux
-  - pushd ./tests/integration/test_app/bin
-  - export OOPSY_SYMFILE_PATH=`oopsy_symfile create ./test_app test_app.sym`
+  - pushd ./tests/integration/test_app
+  - export OOPSY_SYMFILE_PATH=`oopsy_symfile create ./bin/test_app test_app.sym`
   - oopsy_symfile send ${OOPSY_SYMFILE_PATH} 1.0.0
-  - ./test_app || true && popd
+  - ./bin/test_app || true && popd
   - pip install -r requirements-test.txt
   - py.test
   - oopsy_celery_worker logs
