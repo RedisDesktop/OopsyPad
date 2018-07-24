@@ -81,7 +81,7 @@ def oopsy_admin_project_list(ctx):
                 click.echo(
                     '  Minimum allowed version: {}'.format(p['min_version']))
                 click.echo(
-                    '  Allowed Platforms: {}'.format(
+                    '  Allowed platforms: {}'.format(
                         ', '.join(p['allowed_platforms'])))
         else:
             click.echo('No projects.')

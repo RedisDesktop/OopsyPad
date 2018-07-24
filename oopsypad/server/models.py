@@ -151,7 +151,7 @@ class Minidump(mongo.Document):
         process_minidump.delay(str(self.id))
 
     def get_time(self):
-        return self.date_created.strftime('%d.%m.%Y %H:%M')
+        return self.date_created.strftime('%d-%m-%Y %H:%M')
 
     @classmethod
     def get_by_id(cls, minidump_id):
