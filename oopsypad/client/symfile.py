@@ -71,7 +71,11 @@ def oopsy_symfile_send(symfile_path, version):
     VERSION
         Product version.
     """
-    response = send_symfile(symfile_path, get_address(), version)
+    try:
+        response = send_symfile(symfile_path, get_address(), version)
+    except Exception:
+        click.echo('Unable to parse symfile: invalid content.')
+        return
     if response.status_code == 201:
         click.echo(response.json().get('ok', 'OK'))
     elif response.status_code == 403:
@@ -79,6 +83,6 @@ def oopsy_symfile_send(symfile_path, version):
     else:
         try:
             click.echo(response.json().get('error', 'ERROR'))
-        except ValueError as e:
-            click.echo("Server responded %s: %s" % 
-                       (response.status_code, response.content))
+        except ValueError:
+            click.echo('Server responded {}: {}'.format(response.status_code,
+                                                        response.content))
