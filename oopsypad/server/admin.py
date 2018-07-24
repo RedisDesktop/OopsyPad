@@ -20,7 +20,7 @@ from oopsypad.server.helpers import last_12_months
 
 
 def date_format(view, value):
-    return value.strftime('%d-%m-%Y %-I:%M %p')
+    return value.strftime('%d-%m-%Y %H:%M')
 
 
 def grid_formatter(view, value):
@@ -179,8 +179,8 @@ class CrashReportView(DeveloperModelView):
     column_display_actions = False
     column_filters = ('product', 'version', 'platform', 'date_created',
                       'crash_reason')
-    column_list = ['product', 'version', 'platform', 'date_created',
-                   'crash_reason']
+    column_list = ['product', 'version', 'platform', 'crash_reason',
+                   'date_created']
     list_template = 'admin/crash_report_list.html'
 
 
