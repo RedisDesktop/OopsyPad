@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# On OSX use coreutils package to fix absense of readlink command
+if [[ $OSTYPE == darwin* ]]; then
+  brew install coreutils || true
+  PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
+fi
+
 DIR=$(dirname "$(readlink -f "$0")")
 
 function build_breakpad {
