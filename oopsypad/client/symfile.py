@@ -73,8 +73,8 @@ def oopsy_symfile_send(symfile_path, version):
     """
     try:
         response = send_symfile(symfile_path, get_address(), version)
-    except Exception:
-        click.echo('Unable to parse symfile: invalid content.')
+    except Exception as e:
+        click.echo('Unable to send symfile: %s' % e)
         return
     if response.status_code == 201:
         click.echo(response.json().get('ok', 'OK'))
