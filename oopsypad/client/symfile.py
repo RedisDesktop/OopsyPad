@@ -30,6 +30,10 @@ def create_symfile(bin_path, symfile_name, symfile_root):
 def send_symfile(symfile_path, address, version):
     with open(symfile_path, 'r') as f:
         _, platform, _, id, product = f.readline().split()
+    
+    # Note: remove .pdb extension for windows sym files
+    product = product.replace('.pdb', '')
+        
     with open(symfile_path, 'rb') as f:
         headers = {'Authorization': get_token()}
         data = {'version': version, 'platform': platform}
