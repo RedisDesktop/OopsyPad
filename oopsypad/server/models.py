@@ -226,7 +226,12 @@ class Symfile(mongo.Document):
                 'Cannot save symfile: {}'.format(e))
 
     def get_symfile_path(self):
-        return os.path.join(SYMFILES_DIR, self.product, self.symfile_id)
+        if str(self.platform).lower() == "windows":
+            product_name = "%s.pdb" % self.product
+        else:
+            product_name = self.product
+        
+        return os.path.join(SYMFILES_DIR, product_name, self.symfile_id)
 
     @classmethod
     def create_symfile(cls, product, version, platform, symfile_id, file):
