@@ -4,8 +4,10 @@ import os
 import random
 import warnings
 
+from bson import ObjectId
 from dateutil.relativedelta import relativedelta
-from flask import current_app, escape, flash, jsonify, Markup, redirect, request
+from flask import (current_app, escape, flash, jsonify, Markup, redirect,
+                   request, make_response)
 from flask_admin import Admin, AdminIndexView, expose
 from flask_admin.base import MenuLink
 from flask_admin.contrib.mongoengine import helpers, ModelView
@@ -182,6 +184,15 @@ class CrashReportView(DeveloperModelView):
     column_list = ['product', 'version', 'platform', 'crash_reason',
                    'date_created']
     list_template = 'admin/crash_report_list.html'
+    named_filter_urls = True
+
+    @expose('/download/<minidump_id>')
+    def download_minidump(self, minidump_id):
+        minidump = GridFSProxy(ObjectId(minidump_id))
+        file = minidump.read()
+        response = make_response(file)
+        response.mimetype = 'application/octet-stream'
+        return response
 
 
 class IssueView(DeveloperModelView):
@@ -196,6 +207,7 @@ class IssueView(DeveloperModelView):
     column_list = ['platform', 'version', 'reason', 'total', 'actions']
     form_args = dict(total={'label': 'Total Crash Reports'})
     list_template = 'admin/issue_list.html'
+    named_filter_urls = True
     page_size = 10
 
     @expose('/details/')
