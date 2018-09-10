@@ -60,18 +60,18 @@
                 <th>Reason</th>
             </tr>
             </thead>
-            {% for row in latest_crash_reports %}
+            {% for crash_report in latest_crash_reports %}
                 <tr>
-                    <td class="col-time">{{ row.get_time() }}</td>
-                    <td class="col-platform">{{ row.platform }}</td>
-                    <td class="col-reason">{{ row.crash_reason }}</td>
+                    <td class="col-time">{{ crash_report.get_time() }}</td>
+                    <td class="col-platform">{{ crash_report.platform }}</td>
+                    <td class="col-reason">{{ crash_report.crash_reason }}</td>
                 </tr>
             {% else %}
                 {{ empty_list() }}
             {% endfor %}
         </table>
     </div>
-    <a href="/crash-reports/?flt_2={{ project.name }}" id="view-all-dumps" class="btn btn-default btn-view-all">View All</a>
+    <a href="/crash-reports/?flt_product_equals={{ project.name }}" id="view-all-dumps" class="btn btn-default btn-view-all">View All</a>
 
 
     <h3>Top Issues</h3>
@@ -86,20 +86,20 @@
                 <th>Reason</th>
             </tr>
             </thead>
-            {% for row in top_issues %}
+            {% for issue in top_issues %}
                 <tr>
                     <td>{{ loop.index }}</td>
-                    <td class="col-version">{{ row.version }}</td>
-                    <td class="col-platform">{{ row.platform }}</td>
-                    <td class="col-total">{{ row.total }}</td>
-                    <td class="col-reason">{{ row.reason }}</td>
+                    <td class="col-version">{{ issue.version }}</td>
+                    <td class="col-platform">{{ issue.platform }}</td>
+                    <td class="col-total">{{ issue.total }}</td>
+                    <td class="col-reason">{{ issue.reason }}</td>
                 </tr>
             {% else %}
                 {{ empty_list() }}
             {% endfor %}
         </table>
     </div>
-    <a href="/issue/?flt_2={{ project.name }}" id="view-all-issues" class="btn btn-default btn-view-all">View All</a>
+    <a href="/issue/?flt_product_equals={{ project.name }}" id="view-all-issues" class="btn btn-default btn-view-all">View All</a>
 
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
