@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 import hashlib
 import hmac
@@ -82,6 +82,10 @@ class Minidump(mongo.Document):
 
     crash_address = fields.StringField()
 
+    crash_location = fields.StringField()
+
+    process_uptime = fields.IntField()
+
     crash_thread = fields.IntField()
 
     meta = {'ordering': ['-date_created'],
@@ -125,6 +129,30 @@ class Minidump(mongo.Document):
             current_app.logger.exception(
                 'Cannot get stacktrace: {}'.format(e))
 
+    def parse_process_uptime(self):
+        line_start = 'Process uptime: '
+        stacktrace_lines = self.stacktrace.split('\n')
+        try:
+            process_uptime_line = list(
+                filter(lambda line: str.startswith(line, line_start),
+                       stacktrace_lines))[0]
+            raw_uptime = process_uptime_line.replace(line_start, '')
+
+            if 'not available' not in raw_uptime.lower():
+                if 'seconds' in raw_uptime:
+                    uptime_seconds = int(raw_uptime.split()[0])
+                else:
+                    days, raw_hms = raw_uptime.split(' days ')
+                    hms = datetime.strptime(raw_hms, '%H:%M:%S.%f')
+                    uptime_seconds = timedelta(
+                        days=int(days), hours=hms.hour, minutes=hms.minute,
+                        seconds=hms.second).total_seconds()
+                self.process_uptime = uptime_seconds
+            self.save()
+        except Exception as e:
+            current_app.logger.exception(
+                'Cannot parse process uptime: {}'.format(e))
+
     def parse_stacktrace(self):
         minidump_path = self.file_path
         try:
@@ -138,16 +166,26 @@ class Minidump(mongo.Document):
                 current_app.logger.error(
                     'Cannot parse stacktrace: No crash info provided.')
                 return
+
             self.crash_reason = crash_info.get('type')
             self.crash_address = crash_info.get('address')
             self.crash_thread = crash_info.get('crashing_thread')
+
+            crashing_thread = self.stacktrace_json.get('crashing_thread')
+            frame = crashing_thread.get('frames')[0]
+            module = frame.get('module')
+            module_offset = frame.get('module_offset')
+            self.crash_location = '{} + {}'.format(module, module_offset)
             self.save()
+
+            self.parse_process_uptime()
 
             Issue.create_or_update_issue(product=self.product,
                                          version=self.version,
                                          platform=self.platform,
-                                         reason=self.crash_reason)
-        except subprocess.CalledProcessError as e:
+                                         reason=self.crash_reason,
+                                         location=self.crash_location)
+        except (subprocess.CalledProcessError, IndexError) as e:
             current_app.logger.exception(
                 'Cannot parse stacktrace: {}'.format(e))
 
@@ -331,23 +369,54 @@ class Issue(mongo.Document):
 
     reason = fields.StringField()
 
+    location = fields.StringField()
+
     total = fields.IntField(default=1)
 
     meta = {'ordering': ['-total']}
 
+    @property
+    def last_seen(self):
+        minidumps = Minidump.objects(
+            product=self.product,
+            version=self.version,
+            platform=self.platform,
+            crash_reason=self.reason,
+            crash_location=self.location
+        ).only('date_created').order_by('-date_created').first()
+        return minidumps.date_created
+
+    @property
+    def avg_uptime(self):
+        minidumps = Minidump.objects(
+            product=self.product,
+            version=self.version,
+            platform=self.platform,
+            crash_reason=self.reason,
+            crash_location=self.location,
+            process_uptime__exists=True
+        )
+        total_uptime = minidumps.sum('process_uptime')
+        avg = total_uptime / minidumps.count()
+        return avg
+
     @classmethod
-    def create_or_update_issue(cls, product, version, platform, reason):
+    def create_or_update_issue(cls, product, version, platform, reason,
+                               location):
         issue = cls.objects(product=product,
                             version=version,
                             platform=platform,
-                            reason=reason).first()
+                            reason=reason,
+                            location=location).first()
         if issue:
             issue.total += 1
+            issue.last_seen = datetime.now()
         else:
             issue = cls(product=product,
                         version=version,
                         platform=platform,
-                        reason=reason)
+                        reason=reason,
+                        location=location)
         issue.save()
         return issue
 
@@ -356,8 +425,7 @@ class Issue(mongo.Document):
         return cls.objects(product=project_name)[:n]
 
     def __str__(self):
-        return 'Issue: {} {} {} {} {}'.format(self.product,
-                                              self.version,
-                                              self.platform,
-                                              self.reason,
-                                              self.total)
+        return 'Issue: {} {} {} {} {} {} {}'.format(
+            self.product, self.version, self.platform, self.reason,
+            self.location, self.total,
+            self.last_seen.strftime('%d-%m-%Y %H:%M'))
