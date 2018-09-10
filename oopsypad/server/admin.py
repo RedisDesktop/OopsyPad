@@ -204,7 +204,16 @@ class IssueView(DeveloperModelView):
     column_display_actions = False
     column_filters = ('product', 'platform', 'reason')
     column_formatters = dict(actions=macro('render_actions'))
-    column_list = ['platform', 'version', 'reason', 'total', 'actions']
+    column_list = [
+        'platform',
+        'version',
+        'reason',
+        'location',
+        'total',
+        'avg_uptime',
+        'last_seen',
+        'actions'
+    ]
     form_args = dict(total={'label': 'Total Crash Reports'})
     list_template = 'admin/issue_list.html'
     named_filter_urls = True
@@ -225,6 +234,11 @@ class IssueView(DeveloperModelView):
                            minidumps=minidumps.paginate(page=page_num,
                                                         per_page=per_page),
                            per_page=per_page)
+
+    @expose('/resolve')
+    def resolve(self):
+        # TODO
+        return redirect(self.get_url('.index_view'))
 
 
 class UserView(AdminModelView):
