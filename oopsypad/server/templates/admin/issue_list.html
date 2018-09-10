@@ -1,7 +1,12 @@
 {% extends 'admin/model/list.html' %}
 
 {% macro render_actions(model, column) %}
-    <a href="/issue/details/?id={{ get_pk_value(model) }}" class="btn btn-default">View</a>
+    <p><a href="/issue/details/?id={{ get_pk_value(model) }}" class="btn btn-default">
+        <i class="fa fa-eye glyphicon glyphicon-eye-open"></i> View
+    </a></p>
+    <p><a href="#" class="btn btn-default" disabled>
+        <i class="glyphicon glyphicon-ok"></i> Resolve
+    </a></p>
 {% endmacro %}
 
 {% block body %}
