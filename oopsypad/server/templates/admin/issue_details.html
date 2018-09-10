@@ -21,18 +21,34 @@
     <h3>Issue Details</h3>
     <table id="issue-details-table" class="table table-hover">
         <tbody>
-        <tr>
-            <td>Platform:</td>
-            <td id="issue-platform"><b>{{ issue.platform }}</b></td>
-        </tr>
-        <tr>
-            <td>Version:</td>
-            <td id="issue-version"><b>{{ issue.version }}</b></td>
-        </tr>
-        <tr class="info">
-            <td>Reason:</td>
-            <td id="issue-reason"><b>{{ issue.reason }}</b></td>
-        </tr>
+            <tr>
+                <td>Platform:</td>
+                <td id="issue-platform"><b>{{ issue.platform }}</b></td>
+            </tr>
+            <tr>
+                <td>Version:</td>
+                <td id="issue-version"><b>{{ issue.version }}</b></td>
+            </tr>
+            <tr class="info">
+                <td>Reason:</td>
+                <td id="issue-reason"><b>{{ issue.reason }}</b></td>
+            </tr>
+            <tr>
+                <td>Location:</td>
+                <td id="issue-location"><b>{{ issue.location }}</b></td>
+            </tr>
+            <tr>
+                <td>Total:</td>
+                <td id="issue-total"><b>{{ issue.total }}</b></td>
+            </tr>
+            <tr>
+                <td>Average Process Uptime:</td>
+                <td id="issue-avg_uptime"><b>{{ issue.avg_uptime }} s</b></td>
+            </tr>
+            <tr>
+                <td>Last Seen:</td>
+                <td id="issue-last_seen"><b>{{ issue.last_seen.strftime('%d-%m-%Y %H:%M') }}</b></td>
+            </tr>
         </tbody>
     </table>
 
