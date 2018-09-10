@@ -43,15 +43,20 @@
             <thead>
             <tr>
                 <th>Time</th>
+                <th>Actions</th>
                 <th>Stack Trace</th>
             </tr>
             </thead>
-            {% for row in minidumps.items %}
+            {% for minidump in minidumps.items %}
                 <tr>
-                    <td class="col-time">{{ row.get_time() }}</td>
-                    <td class="col-stacktrace">
-                        <pre class="stacktrace" title="Click to expand/collapse">{{ row.stacktrace }}</pre>
+                    <td class="col-time">{{ minidump.get_time() }}</td>
+                    <td>
+                        <a href="{{ minidump.download_link }}" class="btn btn-default">Download Minidump</a>
                     </td>
+                    <td class="col-stacktrace">
+                        <pre class="stacktrace" title="Click to expand/collapse">{{ minidump.stacktrace }}</pre>
+                    </td>
+
                 </tr>
             {% else %}
                 <tr>

@@ -6,7 +6,7 @@ import json
 import os
 import subprocess
 
-from flask import current_app
+from flask import current_app, url_for
 from flask_mongoengine import MongoEngine, BaseQuerySet
 from flask_security import UserMixin, RoleMixin
 import mongoengine as mongo
@@ -86,6 +86,11 @@ class Minidump(mongo.Document):
 
     meta = {'ordering': ['-date_created'],
             'queryset_class': BaseQuerySet}
+
+    @property
+    def download_link(self):
+        return url_for('crash-reports.download_minidump',
+                       minidump_id=str(self.minidump.grid_id))
 
     def save_minidump_file(self, minidump_file):
         if not os.path.isdir(DUMPS_DIR):
