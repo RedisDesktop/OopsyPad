@@ -86,7 +86,7 @@ class OopsyPadTest(TestBase):
                                      url_for('project.index_view'))
         self.browser.get(projects_url)
         self.click_element(
-            element_xpath='//a[contains(text(), "View Crash Report")]')
+            element_xpath='//a[contains(text(), "Details")]')
 
         # Check latest minidump info
         minidump = models.Minidump.get_last_n_project_minidumps(
