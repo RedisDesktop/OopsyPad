@@ -120,7 +120,12 @@ class ProjectView(AdminModelView):
     column_editable_list = ['name']
     column_formatters = dict(actions=macro('render_actions'))
     column_labels = dict(min_version='Minimum Version')
-    column_list = ['name', 'min_version', 'allowed_platforms', 'actions']
+    column_list = [
+        'name',
+        'min_version',
+        'allowed_platforms',
+        'actions'
+    ]
     create_modal = True
     create_modal_template = 'admin/add_project_modal.html'
     create_template = 'admin/add_project.html'
@@ -179,10 +184,26 @@ class CrashReportView(DeveloperModelView):
     can_delete = False
     can_edit = False
     column_display_actions = False
-    column_filters = ('product', 'version', 'platform', 'date_created',
-                      'crash_reason')
-    column_list = ['product', 'version', 'platform', 'crash_reason',
-                   'date_created']
+    column_filters = (
+        'product',
+        'version',
+        'platform',
+        'date_created',
+        'crash_reason'
+    )
+    column_formatters = dict(
+        process_uptime=lambda v, c, m, n: '{} s'.format(m.process_uptime)
+        if m.process_uptime else ''
+    )
+    column_list = [
+        'product',
+        'version',
+        'platform',
+        'crash_reason',
+        'crash_location',
+        'process_uptime',
+        'date_created'
+    ]
     list_template = 'admin/crash_report_list.html'
     named_filter_urls = True
 
@@ -202,8 +223,15 @@ class IssueView(DeveloperModelView):
     can_view_details = True
     column_default_sort = ('total', True)
     column_display_actions = False
-    column_filters = ('product', 'platform', 'reason')
-    column_formatters = dict(actions=macro('render_actions'))
+    column_filters = (
+        'product',
+        'platform',
+        'reason'
+    )
+    column_formatters = dict(
+        avg_uptime=lambda v, c, m, n: '{} s'.format(m.avg_uptime),
+        actions=macro('render_actions'),
+    )
     column_list = [
         'platform',
         'version',
@@ -242,8 +270,16 @@ class IssueView(DeveloperModelView):
 
 
 class UserView(AdminModelView):
-    column_list = ['email', 'active', 'roles']
-    form_edit_rules = ['email', 'roles', 'active']
+    column_list = [
+        'email',
+        'active',
+        'roles'
+    ]
+    form_edit_rules = [
+        'email',
+        'roles',
+        'active'
+    ]
     form_overrides = dict(email=StringField)
 
 
@@ -251,11 +287,18 @@ class SymfileView(AdminModelView):
     can_edit = False
     can_view_details = True
     column_editable_list = ['version']
-    column_labels = dict(symfile_name='Filename',
-                         symfile_id='ID')
+    column_labels = dict(
+        symfile_name='Filename',
+        symfile_id='ID'
+    )
     column_type_formatters = CUSTOM_TYPE_FORMATTERS
-    form_excluded_columns = ['product', 'platform', 'date_created',
-                             'symfile_id', 'symfile_name']
+    form_excluded_columns = [
+        'product',
+        'platform',
+        'date_created',
+        'symfile_id',
+        'symfile_name'
+    ]
     form_overrides = dict(version=StringField)
 
     def on_model_change(self, form, model, is_created=None):
