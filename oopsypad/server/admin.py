@@ -37,9 +37,9 @@ def grid_formatter(view, value):
         '<i class="fa fa-file glyphicon glyphicon-file"></i>'
         '{name}</a> '.format(
             url=view.get_url('.api_file_view', **args),
-            name=escape(value.name),
+            name=escape(value.name or ''),
             size=value.length // 1024,
-            content_type=escape(value.content_type)))
+            content_type=escape(value.content_type or '')))
 
 
 CUSTOM_TYPE_FORMATTERS = DEFAULT_FORMATTERS
@@ -237,9 +237,9 @@ class IssueView(DeveloperModelView):
         'version',
         'reason',
         'location',
-        'total',
         'avg_uptime',
         'last_seen',
+        'total',
         'actions'
     ]
     form_args = dict(total={'label': 'Total Crash Reports'})
@@ -263,9 +263,20 @@ class IssueView(DeveloperModelView):
                                                         per_page=per_page),
                            per_page=per_page)
 
-    @expose('/resolve')
+    @expose('/resolve', methods=['POST'])
     def resolve(self):
-        # TODO
+        issue_id = request.args.get('id')
+        if not issue_id and not ObjectId.is_valid(issue_id):
+            flash('Invalid request.')
+            return redirect(self.get_url('.index_view'))
+
+        issue = models.Issue.objects(id=issue_id).first()
+        if not issue:
+            flash('Issue not found.')
+            return redirect(self.get_url('.index_view'))
+
+        issue.resolve_issue()
+        flash('Issue has been resolved.')
         return redirect(self.get_url('.index_view'))
 
 
@@ -321,7 +332,7 @@ class SymfileView(AdminModelView):
                     'Symfile with this ID already exists.')
             if is_created:
                 model.product = product
-                models.version = form.version.data
+                model.version = form.version.data
                 model.platform = platform
                 model.symfile_id = symfile_id
                 model.save_symfile(symfile)
