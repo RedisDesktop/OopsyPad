@@ -1,12 +1,10 @@
 {% extends 'admin/model/list.html' %}
 
 {% macro render_actions(model, column) %}
-    <p><a href="/issue/details/?id={{ get_pk_value(model) }}" class="btn btn-default">
-        <i class="fa fa-eye glyphicon glyphicon-eye-open"></i> View
-    </a></p>
-    <p><a href="#" class="btn btn-default" disabled>
-        <i class="glyphicon glyphicon-ok"></i> Resolve
-    </a></p>
+    <p><a href="/issue/details/?id={{ get_pk_value(model) }}" class="btn btn-default">View</a></p>
+    <form action="{{ get_url('.resolve', id=model.id) }}" method="POST">
+        <button class="btn btn-default" onclick="return confirm('Are you sure you want to resolve the issue?')"><i class="glyphicon glyphicon-ok"></i> Resolve</button>
+    </form>
 {% endmacro %}
 
 {% block body %}

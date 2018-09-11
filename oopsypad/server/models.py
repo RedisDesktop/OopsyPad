@@ -84,7 +84,7 @@ class Minidump(mongo.Document):
 
     crash_location = fields.StringField()
 
-    process_uptime = fields.IntField()
+    process_uptime = fields.IntField(default=0)
 
     crash_thread = fields.IntField()
 
@@ -193,6 +193,15 @@ class Minidump(mongo.Document):
         from oopsypad.server.worker import process_minidump
         process_minidump.delay(str(self.id))
 
+    def remove_minidump(self):
+        if self.file_path:
+            if os.path.isfile(self.file_path):
+                os.remove(self.file_path)
+        if self.minidump:
+            self.minidump.delete()
+            self.save()
+        self.delete()
+
     def get_time(self):
         return self.date_created.strftime('%d-%m-%Y %H:%M')
 
@@ -262,7 +271,12 @@ class Symfile(mongo.Document):
             target_path = self.get_symfile_path()
             if not os.path.isdir(target_path):
                 os.makedirs(target_path)
-            symfile.save(os.path.join(target_path, self.symfile_name))
+            symfile_path = os.path.join(target_path, self.symfile_name)
+            symfile.save(symfile_path)
+            with open(symfile_path, 'rb') as file:
+                self.symfile.put(file,
+                                 content_type='application/octet-stream',
+                                 filename=self.symfile_name)
             self.save()
         except Exception as e:
             current_app.logger.exception(
@@ -281,9 +295,9 @@ class Symfile(mongo.Document):
         symfile = cls.objects(symfile_id=symfile_id).first()
         if not symfile:
             symfile = cls(product=product,
-                          symfile_id=symfile_id,
                           version=version,
                           platform=platform,
+                          symfile_id=symfile_id,
                           date_created=datetime.now())
             symfile.save_symfile(file)
         return symfile
@@ -377,30 +391,35 @@ class Issue(mongo.Document):
 
     @property
     def last_seen(self):
+        minidump = self.get_minidumps().only('date_created').order_by(
+            '-date_created').first()
+        if minidump:
+            return minidump.date_created
+
+    @property
+    def avg_uptime(self):
+        minidumps = self.get_minidumps().filter(process_uptime__exists=True)
+        if minidumps:
+            total_uptime = minidumps.sum('process_uptime')
+            avg = int(total_uptime / minidumps.count())
+            return avg
+        return 0
+
+    def resolve_issue(self):
+        minidumps = self.get_minidumps()
+        for minidump in minidumps:
+            minidump.remove_minidump()
+        self.delete()
+
+    def get_minidumps(self):
         minidumps = Minidump.objects(
             product=self.product,
             version=self.version,
             platform=self.platform,
             crash_reason=self.reason,
             crash_location=self.location
-        ).only('date_created').order_by('-date_created').first()
-        return minidumps.date_created
-
-    @property
-    def avg_uptime(self):
-        minidumps = Minidump.objects(
-            product=self.product,
-            version=self.version,
-            platform=self.platform,
-            crash_reason=self.reason,
-            crash_location=self.location,
-            process_uptime__exists=True
         )
-        if minidumps:
-            total_uptime = minidumps.sum('process_uptime')
-            avg = int(total_uptime / minidumps.count())
-            return avg
-        return 0
+        return minidumps
 
     @classmethod
     def create_or_update_issue(cls, product, version, platform, reason,
@@ -412,7 +431,6 @@ class Issue(mongo.Document):
                             location=location).first()
         if issue:
             issue.total += 1
-            issue.last_seen = datetime.now()
         else:
             issue = cls(product=product,
                         version=version,

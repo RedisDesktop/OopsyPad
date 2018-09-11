@@ -38,7 +38,7 @@
                 <td id="issue-location"><b>{{ issue.location }}</b></td>
             </tr>
             <tr>
-                <td>Total:</td>
+                <td>Total Crash Reports:</td>
                 <td id="issue-total"><b>{{ issue.total }}</b></td>
             </tr>
             <tr>
@@ -48,6 +48,14 @@
             <tr>
                 <td>Last Seen:</td>
                 <td id="issue-last_seen"><b>{{ issue.last_seen.strftime('%d-%m-%Y %H:%M') }}</b></td>
+            </tr>
+            <tr>
+                <td>Actions:</td>
+                <td id="issue-actions">
+                    <form action="{{ get_url('.resolve', id=issue.id) }}" method="POST">
+                        <button class="btn btn-default" onclick="return confirm('Are you sure you want to resolve the issue?')"><i class="glyphicon glyphicon-ok"></i> Resolve</button>
+                    </form>
+                </td>
             </tr>
         </tbody>
     </table>
