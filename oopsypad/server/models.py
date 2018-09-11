@@ -396,9 +396,11 @@ class Issue(mongo.Document):
             crash_location=self.location,
             process_uptime__exists=True
         )
-        total_uptime = minidumps.sum('process_uptime')
-        avg = total_uptime / minidumps.count()
-        return avg
+        if minidumps:
+            total_uptime = minidumps.sum('process_uptime')
+            avg = int(total_uptime / minidumps.count())
+            return avg
+        return 0
 
     @classmethod
     def create_or_update_issue(cls, product, version, platform, reason,
