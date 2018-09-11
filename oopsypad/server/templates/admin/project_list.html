@@ -2,9 +2,7 @@
 
 
 {% macro render_actions(model, column) %}
-    <a href="/project/details/?id={{ get_pk_value(model) }}" class="btn btn-primary">
-        <i class="fa fa-eye glyphicon glyphicon-eye-open"></i> Details
-    </a>
+    <a href="/project/details/?id={{ get_pk_value(model) }}" class="btn btn-primary">Details</a>
     <a href="/project/edit/?id={{ get_pk_value(model) }}" class="btn btn-default">
         <i class="fa fa-pencil glyphicon glyphicon-pencil"></i> Edit Settings
     </a>

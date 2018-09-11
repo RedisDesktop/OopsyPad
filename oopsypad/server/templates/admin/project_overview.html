@@ -56,15 +56,21 @@
             <thead>
             <tr>
                 <th>Time</th>
+                <th>Version</th>
                 <th>Platform</th>
                 <th>Reason</th>
+                <th>Location</th>
+                <th>Process Uptime</th>
             </tr>
             </thead>
             {% for crash_report in latest_crash_reports %}
                 <tr>
                     <td class="col-time">{{ crash_report.get_time() }}</td>
+                    <td class="col-version">{{ crash_report.version }}</td>
                     <td class="col-platform">{{ crash_report.platform }}</td>
                     <td class="col-reason">{{ crash_report.crash_reason }}</td>
+                    <td class="col-crash_location">{{ crash_report.crash_location }}</td>
+                    <td class="col-process_uptime">{{ crash_report.process_uptime }} s</td>
                 </tr>
             {% else %}
                 {{ empty_list() }}
@@ -82,8 +88,12 @@
                 <th>Priority</th>
                 <th>Version</th>
                 <th>Platform</th>
-                <th>Total Crash Reports</th>
                 <th>Reason</th>
+                <th>Location</th>
+                <th>Avg Uptime</th>
+                <th>Last Seen</th>
+                <th>Total Crash Reports</th>
+
             </tr>
             </thead>
             {% for issue in top_issues %}
@@ -91,8 +101,11 @@
                     <td>{{ loop.index }}</td>
                     <td class="col-version">{{ issue.version }}</td>
                     <td class="col-platform">{{ issue.platform }}</td>
-                    <td class="col-total">{{ issue.total }}</td>
                     <td class="col-reason">{{ issue.reason }}</td>
+                    <td class="col-location">{{ issue.location }}</td>
+                    <td class="col-avg_uptime">{{ issue.avg_uptime }} s</td>
+                    <td class="col-last_seen">{{ issue.last_seen.strftime('%d-%m-%Y %H:%M') }}</td>
+                    <td class="col-total">{{ issue.total }}</td>
                 </tr>
             {% else %}
                 {{ empty_list() }}
