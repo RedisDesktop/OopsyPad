@@ -21,7 +21,7 @@ def create_symfile(bin_path, symfile_name, symfile_root):
     symfile_target_path = os.path.join(symfile_root, product, id)
 
     if not os.path.isdir(symfile_target_path):
-        os.makedirs(symfile_target_path)
+        os.makedirs(symfile_target_path, exist_ok=True)
     symfile_path = os.path.join(symfile_target_path, symfile_name)
     shutil.move(symfile_name, symfile_path)
     return symfile_path
