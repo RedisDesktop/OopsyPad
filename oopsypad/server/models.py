@@ -167,7 +167,7 @@ class Minidump(mongo.Document):
                     'Cannot parse stacktrace: No crash info provided.')
                 return
 
-            self.crash_reason = crash_info.get('type')
+            self.crash_reason = crash_info.get('type').split()[0]
             self.crash_address = crash_info.get('address')
             self.crash_thread = crash_info.get('crashing_thread')
 
