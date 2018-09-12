@@ -84,7 +84,7 @@ class Minidump(mongo.Document):
 
     crash_location = fields.StringField()
 
-    process_uptime = fields.IntField(default=0)
+    process_uptime = fields.IntField()
 
     crash_thread = fields.IntField()
 
@@ -196,7 +196,11 @@ class Minidump(mongo.Document):
     def remove_minidump(self):
         if self.file_path:
             if os.path.isfile(self.file_path):
-                os.remove(self.file_path)
+                try:
+                    os.remove(self.file_path)
+                except OSError as e:
+                    current_app.logger.exception(
+                        'Cannot remove minidump: {}'.format(e))
         if self.minidump:
             self.minidump.delete()
             self.save()
@@ -400,9 +404,7 @@ class Issue(mongo.Document):
     def avg_uptime(self):
         minidumps = self.get_minidumps().filter(process_uptime__exists=True)
         if minidumps:
-            total_uptime = minidumps.sum('process_uptime')
-            avg = int(total_uptime / minidumps.count())
-            return avg
+            return int(minidumps.average('process_uptime'))
         return 0
 
     def resolve_issue(self):
