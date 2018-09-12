@@ -9,6 +9,7 @@ from dateutil.relativedelta import relativedelta
 from flask import (current_app, escape, flash, jsonify, Markup, redirect,
                    request, make_response)
 from flask_admin import Admin, AdminIndexView, expose
+from flask_admin.actions import action
 from flask_admin.base import MenuLink
 from flask_admin.contrib.mongoengine import helpers, ModelView
 from flask_admin.contrib.mongoengine.view import DEFAULT_FORMATTERS
@@ -278,6 +279,14 @@ class IssueView(DeveloperModelView):
         issue.resolve_issue()
         flash('Issue has been resolved.')
         return redirect(self.get_url('.index_view'))
+
+    @action('resolve_issues', 'Resolve selected issues',
+            'Are you sure you want to resolve selected issues?')
+    def action_resolve_issues(self, ids):
+        issues = models.Issue.objects(id__in=ids)
+        for issue in issues:
+            issue.resolve_issue()
+        flash('Selected issues have been resolved.')
 
 
 class UserView(AdminModelView):
