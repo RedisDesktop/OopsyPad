@@ -8,7 +8,7 @@ from bson import ObjectId
 from dateutil.relativedelta import relativedelta
 from flask import (current_app, escape, flash, jsonify, Markup, redirect,
                    request, make_response)
-from flask_admin import Admin, AdminIndexView, expose
+from flask_admin import Admin, AdminIndexView, BaseView, expose
 from flask_admin.actions import action
 from flask_admin.base import MenuLink
 from flask_admin.contrib.mongoengine import helpers, ModelView
@@ -366,13 +366,23 @@ class SymfileView(AdminModelView):
                         'Unable to delete symfile: {}'.format(e))
 
 
+class HelpView(BaseView):
+    def is_visible(self):
+        return False
+
+    @expose('/')
+    def help_page(self):
+        return self.render('admin/help.html')
+
+
 admin = Admin(
     name='OopsyPad',
     template_mode='bootstrap3',
     index_view=CustomAdminView(template='index.html', url='/')
 )
-
-
+admin.add_view(HelpView(name='Help', endpoint='help'))
+admin.add_link(MenuLink(name='Help', url='/help', icon_type='glyph',
+                        icon_value='glyphicon-question-sign'))
 admin.add_link(AuthenticatedMenuLink(name='Logout', url='/logout'))
 admin.add_link(NotAuthenticatedMenuLink(name='Login', url='/login'))
 

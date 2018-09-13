@@ -1,0 +1,50 @@
+{% extends 'admin/base.html' %}
+
+{% block body %}
+    <div class="row" style="line-height: 1.8;">
+        <div class="col-md-6 col-md-offset-3">
+            <h3>What is send to OopsyPad?</h3>
+            <h4>Dump files that typically contain:</h4>
+            <ul>
+                <li>CPU context (register data) as it was at the time the crash
+                    occurred, and an
+                    indication of which thread caused the crash. General-purpose
+                    registers are
+                    included, as are special-purpose registers such as the
+                    instruction pointer
+                    (program counter).
+                </li>
+                <li>Information about each thread of execution within a crashed
+                    process,
+                    including:
+                    <ul>
+                        <li>The memory region used for each thread’s stack.</li>
+                        <li>CPU context for each thread, which for various
+                            reasons is not the same
+                            as the crash context in the case of the crashed
+                            thread.
+                        </li>
+                    </ul>
+                </li>
+                <li>A list of loaded code segments (or modules), including:
+                    <ul>
+                        <li>The name of the file (<code>.so</code>,
+                            <code>.exe</code>, <code>.dll</code>, etc.) which
+                            provides the
+                            code.
+                        </li>
+                        <li>The boundaries of the memory region in which the
+                            code segment is visible
+                            to the process.
+                        </li>
+                        <li>A reference to the debugging information for the
+                            code module, when such
+                            information is available.
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+            <p></p>
+        </div>
+    </div>
+{% endblock %}
