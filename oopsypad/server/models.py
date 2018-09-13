@@ -175,7 +175,10 @@ class Minidump(mongo.Document):
             frame = crashing_thread.get('frames')[0]
             module = frame.get('module')
             module_offset = frame.get('module_offset')
-            self.crash_location = '{} + {}'.format(module, module_offset)
+            if module and module_offset:
+                self.crash_location = '{} + {}'.format(module, module_offset)
+            else:
+                self.crash_location = self.crash_address
             self.save()
 
             self.parse_process_uptime()
