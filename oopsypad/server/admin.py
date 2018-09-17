@@ -254,7 +254,8 @@ class IssueView(DeveloperModelView):
         minidumps = models.Minidump.objects(product=issue.product,
                                             version=issue.version,
                                             platform=issue.platform,
-                                            crash_reason=issue.reason)
+                                            crash_reason=issue.reason,
+                                            crash_location=issue.location)
         page_num = int(request.args.get('page') or 1)
         per_page = 10
         return self.render('admin/issue_details.html',
