@@ -15,7 +15,7 @@ function build_breakpad {
     
     # NOTE(u_glide): Only client-mode is supported on OSX
     if [[ $OSTYPE == darwin* ]]; then
-        xcodebuild -sdk macosx -project src/tools/mac/dump_syms/dump_syms.xcodeproj -configuration Release ARCHS=x86_64               
+        xcodebuild -sdk macosx -project src/tools/mac/dump_syms/dump_syms.xcodeproj -configuration Release ARCHS=x86_64 -UseModernBuildSystem=NO              
     else
         git clone https://chromium.googlesource.com/linux-syscall-support src/third_party/lss || true            
         ./configure
