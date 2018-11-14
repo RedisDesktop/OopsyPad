@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
+from distutils.version import LooseVersion
 import hashlib
 import hmac
 import json
@@ -84,12 +85,22 @@ class Minidump(mongo.Document):
 
     crash_location = fields.StringField()
 
-    process_uptime = fields.IntField()
+    process_uptime = fields.IntField(default=0)
 
     crash_thread = fields.IntField()
 
-    meta = {'ordering': ['-date_created'],
-            'queryset_class': BaseQuerySet}
+    meta = {
+        'indexes': [
+            'product',
+            'platform',
+            'date_created',
+            ('product', 'version'),
+            ('product', 'version', 'platform', 'crash_reason'),
+            ('product', 'version', 'platform', 'crash_reason', 'crash_location')
+        ],
+        'ordering': ['-date_created'],
+        'queryset_class': BaseQuerySet
+    }
 
     @property
     def download_link(self):
@@ -242,8 +253,8 @@ class Minidump(mongo.Document):
 
     @classmethod
     def get_versions_per_product(cls, product):
-        return sorted(list(set([i.version
-                                for i in cls.objects(product=product)])))
+        versions = cls.objects(product=product).distinct('version')
+        return sorted(versions, key=LooseVersion)
 
     @classmethod
     def get_last_n_project_minidumps(cls, n, project_name):
@@ -271,6 +282,12 @@ class Symfile(mongo.Document):
     symfile = fields.FileField(required=True)
 
     date_created = fields.DateTimeField()
+
+    meta = {
+        'indexes': [
+            'symfile_id'
+        ]
+    }
 
     def save_symfile(self, symfile):
         try:
@@ -346,6 +363,12 @@ class Project(mongo.Document):
 
     allowed_platforms = fields.ListField(fields.ReferenceField(Platform))
 
+    meta = {
+        'indexes': [
+            'name'
+        ]
+    }
+
     def get_allowed_platforms(self):
         return [i.name for i in self.allowed_platforms]
 
@@ -394,7 +417,13 @@ class Issue(mongo.Document):
 
     total = fields.IntField(default=1)
 
-    meta = {'ordering': ['-total']}
+    meta = {
+        'indexes': [
+            'product',
+            ('product', 'version', 'platform', 'reason', 'location')
+        ],
+        'ordering': ['-total']
+    }
 
     @property
     def last_seen(self):
