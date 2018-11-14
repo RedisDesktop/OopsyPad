@@ -12,6 +12,10 @@ from oopsypad.server.forms import AdminRegisterForm
 bp = Blueprint('public', __name__)
 
 
+def client_error(error):
+    return jsonify(error=error), 400
+
+
 @bp.route('/token', methods=['GET'])
 @http_auth_required
 def get_auth_token():
@@ -24,35 +28,42 @@ def crash_report():
 
     product = data.get('product')
     if not product:
-        return jsonify(error='Product name is required.')
-    project = models.Project.objects(name=product).first()
-    if not project:
-        return jsonify(error='{} project does not exist.'.format(product)), 400
+        return client_error('Product name is required.')
 
     version = data.get('version')
     if not version:
-        return jsonify(error='Product version is required.')
-    if project.min_version and version < project.min_version:
-        return jsonify(
-            error='You use an old version. Please download at least {} '
-                  'release.'.format(project.min_version)), 400
+        return client_error('Product version is required.')
 
     platform = data.get('platform')
     if not platform:
-        return jsonify(error='Product platform is required.')
-    if platform not in project.get_allowed_platforms():
-        return jsonify(error='{} platform is not allowed for {}.'.format(
-            platform, product)), 400
+        return client_error('Product platform is required.')
+
     minidump = request.files.get('upload_file_minidump')
     if not minidump:
-        return jsonify(error='Minidump file is required.'), 400
+        return client_error('Minidump file is required.')
+
+    project = models.Project.objects(name=product).first()
+    if not project:
+        return client_error('{} project not found.'.format(product))
+
+    if project.min_version and version < project.min_version:
+        return client_error(
+            'You use an old version. Please download at least {} '
+            'release.'.format(project.min_version))
+
+    if platform not in project.get_allowed_platforms():
+        return client_error('{} platform is not allowed for {}.'.format(
+            platform, product))
+
     try:
         models.Minidump.create_minidump(product=product,
                                         version=version,
                                         platform=platform,
                                         minidump_file=minidump)
     except Exception as e:
-        return jsonify(error='Something went wrong: {}'.format(e)), 400
+        error = 'Cannot save crash report: {}'.format(e)
+        current_app.logger.exception(error)
+        return jsonify(error=error), 500
 
     return jsonify(ok='Thank you!'), 201
 

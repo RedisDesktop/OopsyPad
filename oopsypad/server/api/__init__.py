@@ -53,7 +53,11 @@ def add_project(name):
 @roles_accepted('admin')
 def delete_project(name):
     try:
-        models.Project.objects.get(name=name).delete()
+        project = models.Project.objects(name=name).first()
+        if not project:
+            return jsonify(error='Project not found.'), 400
+
+        project.delete()
         return jsonify(ok='{} project was deleted.'.format(name)), 202
     except Exception as e:
         return jsonify(error='Something went wrong: {}'.format(e)), 400
