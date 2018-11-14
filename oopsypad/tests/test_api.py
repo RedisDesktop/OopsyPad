@@ -104,7 +104,7 @@ class CrashReportTest(TestBase):
         (TEST_APP, '0.9', 'What?', 'bad platform',
          {'error': 'What? platform is not allowed for {}.'.format(TEST_APP)}),
         ('fffuuuu', '0.9', LINUX, 'bad product',
-         {'error': 'fffuuuu project does not exist.'})
+         {'error': 'fffuuuu project not found.'})
     )
     @unpack
     def test_send_crash_report_validation(self, product, version, platform,

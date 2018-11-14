@@ -45,7 +45,7 @@ class OopsyGroup(click.Group):
         try:
             return self.main(*args, **kwargs)
         except urllib3.exceptions.NewConnectionError as e:
-            click.echo('Unable to connect to server ({}).'.format(e))
+            click.echo('Cannot connect to server ({}).'.format(e))
         except requests.exceptions.MissingSchema as e:
             click.echo('Invalid address ({}).'.format(e))
         except click.ClickException as e:

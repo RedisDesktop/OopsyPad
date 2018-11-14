@@ -141,11 +141,22 @@ class ProjectView(AdminModelView):
 
     @expose('/details/')
     def details_view(self):
-        project = models.Project.objects.get(id=request.args.get('id'))
+        project_id = request.args.get('id')
+        if not project_id or not ObjectId.is_valid(project_id):
+            flash('Invalid request.')
+            return redirect(self.get_url('.index_view'))
+
+        project = models.Project.objects(id=project_id).first()
+        if not project:
+            flash('Project not found.')
+            return redirect(self.get_url('.index_view'))
+
         minidump_versions = models.Minidump.get_versions_per_product(
             product=project.name)
+
         last_10_minidumps = models.Minidump.get_last_n_project_minidumps(
             n=10, project_name=project.name)
+
         issues = models.Issue.get_top_n_project_issues(
             n=10, project_name=project.name)
         return self.render('admin/project_overview.html',
@@ -158,7 +169,14 @@ class ProjectView(AdminModelView):
     @expose('/_crash_reports')
     def crash_reports_chart(self):
         version = request.args.get('version')
-        project = models.Project.objects.get(id=request.args.get('id'))
+        project_id = request.args.get('id')
+        if not project_id or not ObjectId.is_valid(project_id):
+            return jsonify({})
+
+        project = models.Project.objects(id=project_id).first()
+        if not project:
+            return jsonify({})
+
         platforms = project.get_allowed_platforms()
         if version and 'All' not in version:
             project_minidumps = models.Minidump.objects(product=project.name,
@@ -167,7 +185,7 @@ class ProjectView(AdminModelView):
             project_minidumps = models.Minidump.objects(product=project.name)
         data = {}
         for platform in platforms:
-            platform_minidumps = project_minidumps(platform=platform)
+            platform_minidumps = project_minidumps.filter(platform=platform)
             data[platform] = \
                 models.Minidump.get_last_12_months_minidumps_counts(
                     platform_minidumps)
@@ -250,7 +268,16 @@ class IssueView(DeveloperModelView):
 
     @expose('/details/')
     def details_view(self):
-        issue = models.Issue.objects.get(id=request.args.get('id'))
+        issue_id = request.args.get('id')
+        if not issue_id or not ObjectId.is_valid(issue_id):
+            flash('Invalid request')
+            return redirect(self.get_url('.index_view'))
+
+        issue = models.Issue.objects(id=issue_id).first()
+        if not issue:
+            flash('Issue not found.')
+            return redirect(self.get_url('.index_view'))
+
         minidumps = models.Minidump.objects(product=issue.product,
                                             version=issue.version,
                                             platform=issue.platform,
@@ -331,9 +358,9 @@ class SymfileView(AdminModelView):
                 _, platform, _, symfile_id, product = symfile_first_line.split()
             except Exception as e:
                 current_app.logger.exception(
-                    'Unable to parse symfile: {}'.format(e))
+                    'Cannot parse symfile: {}'.format(e))
                 raise validators.ValidationError(
-                    'Unable to parse symfile invalid content.')
+                    'Cannot parse symfile invalid content.')
 
             existing_symfile = models.Symfile.objects(
                 symfile_id=symfile_id).first()
@@ -364,7 +391,7 @@ class SymfileView(AdminModelView):
                             model.platform))
                 except Exception as e:
                     current_app.logger.exception(
-                        'Unable to delete symfile: {}'.format(e))
+                        'Cannot delete symfile: {}'.format(e))
 
 
 class HelpView(BaseView):
