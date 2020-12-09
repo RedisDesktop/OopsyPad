@@ -1,0 +1,25 @@
+# Note: Requires docker-comopse 1.10+.
+version: "2"
+services:
+    
+  mongo:
+    image: mongo
+    ports:
+      - "27017:27017"
+
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
+
+  oopsypad:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    image: oopsypad
+    ports:
+      - "8000:8000"
+    environment:
+      - MONGODB_HOST=mongo
+    depends_on:
+      - mongo

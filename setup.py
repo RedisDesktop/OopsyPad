@@ -22,6 +22,7 @@ setup(
         'gunicorn',
         'requests',
         'raven',
+        'email_validator',
     ],
     tests_require=[
         'selenium',

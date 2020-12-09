@@ -8,6 +8,7 @@ DB_NAMES = {
     PROD: 'oopsy_pad'
 }
 
+mongo_host = os.environ.get('MONGODB_HOST', 'localhost')
 
 class Config:
     SECRET_KEY = 'dev'
@@ -44,12 +45,14 @@ class Config:
     ENABLE_SENTRY = False
     SENTRY_DSN = ''
 
-
 class DevConfig(Config):
     DEBUG = True
     CREATE_TEST_USERS = True
 
-    MONGODB_SETTINGS = {'DB': DB_NAMES[DEV]}
+    MONGODB_SETTINGS = {
+        'DB': DB_NAMES[DEV],
+        'HOST': mongo_host
+    }
 
 
 class TestConfig(Config):
@@ -57,7 +60,10 @@ class TestConfig(Config):
     TESTING = True
     CREATE_TEST_USERS = True
 
-    MONGODB_SETTINGS = {'DB': DB_NAMES[TEST]}
+    MONGODB_SETTINGS = {
+        'DB': DB_NAMES[TEST],
+        'HOST': mongo_host
+    }
 
     LIVESERVER_PORT = 8000
 
@@ -65,7 +71,10 @@ class TestConfig(Config):
 class ProdConfig(Config):
     DEBUG = False
 
-    MONGODB_SETTINGS = {'DB': DB_NAMES[PROD]}
+    MONGODB_SETTINGS = {
+        'DB': DB_NAMES[PROD],
+        'HOST': mongo_host
+    }
 
     ENABLE_SENTRY = True
 
