@@ -24,6 +24,11 @@ RUN python3 -m pip install .
 
 EXPOSE 8000
 
+ENV LC_ALL=en_US.utf-8
+ENV LANG=en_US.utf-8
+
+ENV OOPSY_HOST=http://localhost:8000
+
 RUN dos2unix /OopsyPad/start.sh
 ENTRYPOINT ["/bin/sh"]
 CMD ["/OopsyPad/start.sh"]
