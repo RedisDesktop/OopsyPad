@@ -1,0 +1,22 @@
+# Note: Requires docker-comopse 1.10+.
+version: "2"
+services:
+    
+  mongo:
+    image: mongo
+    ports:
+      - "27017:27017"
+
+  oopsypad:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    image: oopsypad
+    ports:
+      - "8000:8000"
+    environment:
+      - MONGODB_HOST=mongo
+      - CELERY_BROKER_URL=mongodb://mongo
+      - CELERY_RESULT_BACKEND=mongodb://mongo
+    depends_on:
+      - mongo

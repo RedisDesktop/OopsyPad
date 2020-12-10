@@ -17,11 +17,12 @@ setup(
         'flask-httpauth',
         'flask-security',
         'redis',
-        'celery',
+        'celery==4.4.7',
         'python-dateutil',
         'gunicorn',
         'requests',
         'raven',
+        'email_validator',
     ],
     tests_require=[
         'selenium',

@@ -8,6 +8,7 @@ DB_NAMES = {
     PROD: 'oopsy_pad'
 }
 
+mongo_host = os.environ.get('MONGODB_HOST', 'localhost')
 
 class Config:
     SECRET_KEY = 'dev'
@@ -27,8 +28,8 @@ class Config:
     DUMPS_DIR = os.path.join(ROOT_DIR, 'dumps')
     SYMFILES_DIR = os.path.join(ROOT_DIR, 'symbols')
 
-    CELERY_BROKER_URL = 'redis://localhost:6379/1'
-    CELERY_RESULT_BACKEND = 'redis://localhost:6379/1'
+    CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/1')
+    CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://localhost:6379/1')
 
     SECURITY_PASSWORD_HASH = 'sha512_crypt'
     SECURITY_PASSWORD_SALT = SECRET_KEY
@@ -44,12 +45,14 @@ class Config:
     ENABLE_SENTRY = False
     SENTRY_DSN = ''
 
-
 class DevConfig(Config):
     DEBUG = True
     CREATE_TEST_USERS = True
 
-    MONGODB_SETTINGS = {'DB': DB_NAMES[DEV]}
+    MONGODB_SETTINGS = {
+        'DB': DB_NAMES[DEV],
+        'HOST': mongo_host
+    }
 
 
 class TestConfig(Config):
@@ -57,7 +60,10 @@ class TestConfig(Config):
     TESTING = True
     CREATE_TEST_USERS = True
 
-    MONGODB_SETTINGS = {'DB': DB_NAMES[TEST]}
+    MONGODB_SETTINGS = {
+        'DB': DB_NAMES[TEST],
+        'HOST': mongo_host
+    }
 
     LIVESERVER_PORT = 8000
 
@@ -65,7 +71,10 @@ class TestConfig(Config):
 class ProdConfig(Config):
     DEBUG = False
 
-    MONGODB_SETTINGS = {'DB': DB_NAMES[PROD]}
+    MONGODB_SETTINGS = {
+        'DB': DB_NAMES[PROD],
+        'HOST': mongo_host
+    }
 
     ENABLE_SENTRY = True
 
